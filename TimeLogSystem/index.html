@@ -1,0 +1,512 @@
+<!-- ชื่อไฟล์: index.html -->
+<!-- นี่คือโค้ดฝั่ง Client (Frontend) ที่จะแสดงผลใน LIFF -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบลงเวลา</title>
+    <!-- 1. Include Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- 2. Include LIFF SDK -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <!-- 3. Include Bootstrap JS (New: Needed for Modal) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <style>
+        /* CSS สำหรับจัดหน้าจอให้อยู่กึ่งกลาง */
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: #f4f7f6;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .app-container {
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        /* ซ่อนเนื้อหาหลักไว้ก่อนจนกว่าจะโหลดเสร็จ */
+        #main-content {
+            display: none;
+        }
+        /* ซ่อนปุ่มจนกว่าจะได้ location */
+        #action-buttons {
+            display: none;
+        }
+        /* ข้อความแจ้งเตือน (Error) */
+        #error-message {
+            display: none;
+        }
+        .btn-lg-custom {
+            padding: 0.75rem 1.25rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        .profile-img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+            border: 3px solid #06C755;
+        }
+        /* --- NEW: Style for history table --- */
+        .history-table {
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .history-table th {
+            white-space: nowrap;
+        }
+        .history-table td {
+            vertical-align: middle;
+        }
+        .action-in {
+            color: #198754; /* Bootstrap success green */
+            font-weight: 500;
+        }
+        .action-out {
+            color: #dc3545; /* Bootstrap danger red */
+            font-weight: 500;
+        }
+        /* --- END NEW --- */
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- 1. Loading Spinner -->
+        <div id="loading-spinner">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">กำลังโหลดข้อมูล...</p>
+        </div>
+
+        <!-- 2. Error Message (เช่น ปิด GPS) -->
+        <div id="error-message" class="alert alert-danger">
+            <h4 class="alert-heading">เกิดข้อผิดพลาด!</h4>
+            <p id="error-text">ไม่สามารถใช้งานระบบได้</p>
+            <hr>
+            <p class="mb-0">กรุณาตรวจสอบว่าคุณได้เปิด GPS และอนุญาตให้เข้าถึงตำแหน่งที่ตั้ง</p>
+        </div>
+
+        <!-- 3. Main Content (แสดงเมื่อโหลดเสร็จ) -->
+        <div id="main-content">
+            <h3 class="mb-3">ระบบลงเวลาเข้า-ออกงาน</h3>
+            
+            <img id="profile-picture" src="https://placehold.co/80x80/EFEFEF/AAAAAA?text=User" class="profile-img" alt="Profile Picture">
+            <h5 id="display-name">สวัสดี, คุณ...</h5>
+            <p id="user-id" class="text-muted small" style="display: none;"></p>
+            
+            <!-- สถานะ Location -->
+            <div id="location-status" class="alert alert-warning my-3">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span>กำลังค้นหาตำแหน่งของคุณ...</span>
+                </div>
+            </div>
+
+            <!-- ปุ่ม Check In / Out -->
+            <div id="action-buttons" class="d-grid gap-2">
+                <button id="check-in-btn" class="btn btn-success btn-lg-custom">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"/>
+                        <path fill-rule="evenodd" d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                    </svg>
+                    Check In (ลงเวลาเข้างาน)
+                </button>
+                <button id="check-out-btn" class="btn btn-danger btn-lg-custom">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z"/>
+                        <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3z"/>
+                    </svg>
+                    Check Out (ลงเวลาออกงาน)
+                </button>
+            </div>
+
+            <!-- --- NEW: History Button --- -->
+            <div class="d-grid mt-3">
+                <button id="history-btn" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#historyModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock-history" viewBox="0 0 16 16">
+                        <path d="M8.515 1.019A7 7 0 0 0 8 1V0a8 8 0 0 1 .589.022zm2.004.45a7 7 0 0 0-.985-.299l.219-.976q.576.129 1.126.342zm1.37.71a7 7 0 0 0-.439-.27l.493-.87a8 8 0 0 1 .979.654l-.615.789a7 7 0 0 0-.418-.302zm1.834 1.79a7 7 0 0 0-.653-.796l.724-.69q.406.429.747.91zm.744 1.352a7 7 0 0 0-.214-.468l.893-.45a8 8 0 0 1 .45 1.088l-.95.313a7 7 0 0 0-.179-.483m.53 2.507a7 7 0 0 0-.094-.4l.99-.15q.05.322.078.648a8 8 0 0 1-.3 1.158l-.945-.347a7 7 0 0 0 .069-.567m-.217 1.428a7 7 0 0 0-.488-.086l.15-.99a8 8 0 0 1 1.158.3l-.347.945q-.24-.044-.488-.086M1.019 8.515a7 7 0 0 0 .196.47l.976-.219a7 7 0 0 0-.299-.985l-.87.493q.17.302.302.418m1.79 1.834q.467.214.98.39l.313-.95q-.483-.179-.91-.45l-.45.893A8 8 0 0 1 2.81 11.5m1.352.744q.363.176.75.295l.219-.976a7 7 0 0 0-.985-.299l-.493.87q.17.303.302.418M8 1a7 7 0 1 0 4.95 11.95A7 7 0 0 0 8 1m0-1a8 8 0 1 1 0 16A8 8 0 0 1 8 0"/>
+                        <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5"/>
+                    </svg>
+                    ดูประวัติการลงเวลา
+                </button>
+            </div>
+            <!-- --- END NEW --- -->
+            
+            <!-- ผลลัพธ์การทำงาน -->
+            <div id="result-message" class="alert mt-3" style="display: none;"></div>
+
+        </div>
+    </div>
+
+    <!-- --- NEW: History Modal --- -->
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="historyModalLabel">ประวัติ 20 รายการล่าสุด</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Loading spinner for modal -->
+                    <div id="history-loading" class="text-center" style="display: none;">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <!-- Error message for modal -->
+                    <div id="history-error" class="alert alert-danger" style="display: none;"></div>
+                    <!-- History table -->
+                    <div id="history-table-container" class="table-responsive" style="display: none;">
+                        <table class="table table-striped table-hover history-table">
+                            <thead>
+                                <tr>
+                                    <th>เวลา</th>
+                                    <th>รายการ</th>
+                                    <th>ตำแหน่ง</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <!-- Data will be injected here by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- --- END NEW --- -->
+
+
+    <script>
+        // --- START: ตั้งค่าตัวแปรสำคัญ ---
+        // ❗️❗️ 1. ใส่ URL ของ Web App ที่ได้จากการ Deploy Google Apps Script 
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzsD37DUtXNTRl27jy0BEiKXmmgCIqCfDmEJZJq1jUqQsn4GYV0FRd-VbiqEw7SeRt_/exec';
+
+        // ❗️❗️ 2. ใส่ LIFF ID ของคุณที่ได้จาก LINE Developers Console
+        const LIFF_ID = '2008523830-4dl82dd2';
+        // --- END: ตั้งค่าตัวแปรสำคัญ ---
+
+
+        // ตัวแปรสำหรับเก็บข้อมูลผู้ใช้และตำแหน่ง
+        let userProfile = {};
+        let userLocation = {};
+
+        // Element DOM
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const mainContent = document.getElementById('main-content');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const locationStatus = document.getElementById('location-status');
+        const actionButtons = document.getElementById('action-buttons');
+        const checkInBtn = document.getElementById('check-in-btn');
+        const checkOutBtn = document.getElementById('check-out-btn');
+        const resultMessage = document.getElementById('result-message');
+        const profilePicture = document.getElementById('profile-picture');
+        const displayName = document.getElementById('display-name');
+        const userIdElem = document.getElementById('user-id');
+
+        // --- NEW: History Modal Elements ---
+        const historyBtn = document.getElementById('history-btn');
+        const historyModal = document.getElementById('historyModal');
+        const historyLoading = document.getElementById('history-loading');
+        const historyError = document.getElementById('history-error');
+        const historyTableBody = document.getElementById('history-table-body');
+        const historyTableContainer = document.getElementById('history-table-container');
+        // --- END NEW ---
+
+
+        // 1. ฟังก์ชันหลัก: เริ่มต้นการทำงานเมื่อหน้าเว็บโหลด
+        window.onload = async () => {
+            try {
+                // 1.1. เริ่มต้น LIFF
+                await liff.init({ liffId: LIFF_ID });
+
+                // 1.2. ตรวจสอบว่าล็อกอินหรือยัง
+                if (!liff.isLoggedIn()) {
+                    // ถ้ายังไม่ล็อกอิน ให้ไปหน้าล็อกอินของ LINE
+                    liff.login();
+                    return; 
+                }
+
+                // 1.3. ดึงข้อมูลโปรไฟล์ผู้ใช้
+                userProfile = await liff.getProfile();
+                updateProfileUI(userProfile);
+
+                // 1.4. แสดงเนื้อหาหลัก
+                loadingSpinner.style.display = 'none';
+                mainContent.style.display = 'block';
+
+                // 1.5. ขอตำแหน่ง (Location)
+                // นี่คือส่วนที่บังคับเปิด Location
+                await getLocation();
+
+            } catch (error) {
+                console.error('LIFF Initialization failed:', error);
+                showError('ไม่สามารถเริ่มต้น LIFF ได้: ' + error.message);
+            }
+        };
+
+        // 2. อัปเดตหน้าจอด้วยข้อมูลโปรไฟล์
+        function updateProfileUI(profile) {
+            displayName.textContent = `สวัสดี, ${profile.displayName}`;
+            userIdElem.textContent = profile.userId;
+            if (profile.pictureUrl) {
+                profilePicture.src = profile.pictureUrl;
+            }
+        }
+
+        // 3. ฟังก์ชันขอตำแหน่ง (Location)
+        async function getLocation() {
+            return new Promise((resolve, reject) => {
+                if ('geolocation' in navigator) {
+                    // ใช้ enableHighAccuracy: true เพื่อความแม่นยำ
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            // 3.1. สำเร็จ: ได้รับตำแหน่ง
+                            userLocation = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude
+                            };
+                            
+                            // อัปเดต UI
+                            locationStatus.className = 'alert alert-success my-3';
+                            locationStatus.innerHTML = `✅ ได้รับตำแหน่งของคุณแล้ว`;
+                            
+                            // แสดงปุ่ม Check In / Out
+                            actionButtons.style.display = 'grid';
+                            resolve();
+                        },
+                        (error) => {
+                            // 3.2. ไม่สำเร็จ: ผู้ใช้ไม่อนุญาต หรือเกิดข้อผิดพลาด
+                            console.error('Geolocation error:', error);
+                            let msg = '';
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    msg = "คุณปฏิเสธการเข้าถึงตำแหน่งที่ตั้ง";
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    msg = "ไม่สามารถระบุตำแหน่งปัจจุบันได้";
+                                    break;
+                                case error.TIMEOUT:
+                                    msg = "หมดเวลาในการค้นหาตำแหน่ง";
+                                    break;
+                                default:
+                                    msg = "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ";
+                            }
+                            // บังคับโดยการแสดง Error และไม่แสดงปุ่ม
+                            showError(`กรุณาเปิด GPS และอนุญาตให้แอปเข้าถึงตำแหน่งที่ตั้ง (${msg})`);
+                            reject(new Error(msg));
+                        },
+                        { 
+                            enableHighAccuracy: true, // ขอความแม่นยำสูง
+                            timeout: 15000, // หมดเวลาใน 15 วินาที
+                            maximumAge: 0 // ไม่ใช้ค่าเก่า
+                        }
+                    );
+                } else {
+                    // 3.3. ไม่สำเร็จ: เบราว์เซอร์ไม่รองรับ
+                    showError('เบราว์เซอร์ของคุณไม่รองรับ Geolocation');
+                    reject(new Error('Geolocation not supported'));
+                }
+            });
+        }
+
+        // 4. ฟังก์ชันบันทึกเวลา (เมื่อกดปุ่ม)
+        async function recordTime(action) {
+            // ปิดปุ่มชั่วคราว ป้องกันการกดซ้ำ
+            setButtonsDisabled(true);
+            showResult('loading', 'กำลังบันทึกข้อมูล...');
+
+            const data = {
+                userId: userProfile.userId,
+                displayName: userProfile.displayName,
+                action: action, // 'IN' หรือ 'OUT'
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude
+            };
+
+            try {
+                // 5. ส่งข้อมูลไปที่ Google Apps Script (doPost)
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    // mode: 'no-cors' // อาจจำเป็นถ้ามีปัญหา CORS แต่จะทำให้ไม่ได้รับ response
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8', // GAS มักจะรับ text/plain สำหรับ e.postData.contents
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    // 5.1. บันทึกสำเร็จ
+                    const actionText = action === 'IN' ? 'เข้างาน' : 'ออกงาน';
+                    showResult('success', `บันทึกเวลา${actionText}สำเร็จ!`);
+                    
+                    // (ทางเลือก) ปิดหน้าต่าง LIFF หลังจากบันทึกสำเร็จ 2 วินาที
+                    setTimeout(() => {
+                        if (liff.isInClient()) {
+                            liff.closeWindow();
+                        }
+                    }, 2000);
+
+                } else {
+                    // 5.2. บันทึกไม่สำเร็จ (Error จาก Apps Script)
+                    showResult('danger', 'บันทึกไม่สำเร็จ: ' + result.message);
+                    setButtonsDisabled(false); // เปิดปุ่มให้ลองใหม่
+                }
+            } catch (error) {
+                // 5.3. บันทึกไม่สำเร็จ (Network Error)
+                console.error('Fetch error:', error);
+                showResult('danger', 'เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message);
+                setButtonsDisabled(false); // เปิดปุ่มให้ลองใหม่
+            }
+        }
+
+        // 6. เพิ่ม Event Listeners ให้กับปุ่ม
+        checkInBtn.addEventListener('click', () => recordTime('IN'));
+        checkOutBtn.addEventListener('click', () => recordTime('OUT'));
+
+        // --- NEW: 7. Add Event Listener for History Button ---
+        historyBtn.addEventListener('click', fetchHistory);
+        // --- END NEW ---
+
+
+        // --- NEW: 8. Function to fetch history ---
+        async function fetchHistory() {
+            // Reset modal state
+            historyTableBody.innerHTML = '';
+            historyError.style.display = 'none';
+            historyTableContainer.style.display = 'none';
+            historyLoading.style.display = 'block';
+
+            const data = {
+                action: 'getHistory',
+                userId: userProfile.userId
+            };
+
+            try {
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    renderHistory(result.history);
+                } else {
+                    showHistoryError('ไม่สามารถดึงข้อมูลได้: ' + result.message);
+                }
+
+            } catch (error) {
+                console.error('Fetch history error:', error);
+                showHistoryError('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message);
+            }
+        }
+
+        // --- NEW: 9. Function to render history table ---
+        function renderHistory(historyArray) {
+            historyLoading.style.display = 'none';
+            
+            if (historyArray.length === 0) {
+                showHistoryError('ไม่พบประวัติการลงเวลา');
+                return;
+            }
+
+            historyTableContainer.style.display = 'block';
+            
+            historyArray.forEach(record => {
+                const tr = document.createElement('tr');
+                
+                // Format timestamp
+                const date = new Date(record.timestamp);
+                // ปรับ format วันที่และเวลาให้เป็นแบบไทย
+                const dateStr = date.toLocaleDateString('th-TH', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+                const timeStr = date.toLocaleTimeString('th-TH', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                // Format action
+                const actionClass = record.action === 'IN' ? 'action-in' : 'action-out';
+                const actionText = record.action === 'IN' ? 'เข้างาน' : 'ออกงาน';
+
+                tr.innerHTML = `
+                    <td>${dateStr}<br><span class="text-muted small">${timeStr} น.</span></td>
+                    <td class="${actionClass}">${actionText}</td>
+                    <td><a href="${record.locationLink}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-1">ดูแผนที่</a></td>
+                `;
+                historyTableBody.appendChild(tr);
+            });
+        }
+
+        // --- NEW: 10. Function to show error in modal ---
+        function showHistoryError(message) {
+            historyLoading.style.display = 'none';
+            historyTableContainer.style.display = 'none';
+            historyError.style.display = 'block';
+            historyError.textContent = message;
+        }
+
+
+        // --- ฟังก์ชันช่วยเหลือ (Utility Functions) ---
+
+        function setButtonsDisabled(disabled) {
+            checkInBtn.disabled = disabled;
+            checkOutBtn.disabled = disabled;
+            if(disabled) {
+                checkInBtn.classList.add('disabled');
+                checkOutBtn.classList.add('disabled');
+            } else {
+                checkInBtn.classList.remove('disabled');
+                checkOutBtn.classList.remove('disabled');
+            }
+        }
+
+        function showResult(type, message) {
+            resultMessage.style.display = 'block';
+            if (type === 'loading') {
+                resultMessage.className = 'alert alert-info';
+                resultMessage.innerHTML = `<div class="spinner-border spinner-border-sm me-2" role="status"></div> ${message}`;
+            } else if (type === 'success') {
+                resultMessage.className = 'alert alert-success';
+                resultMessage.innerHTML = `✅ ${message}`;
+            } else if (type === 'danger') {
+                resultMessage.className = 'alert alert-danger';
+                resultMessage.innerHTML = `❌ ${message}`;
+            }
+        }
+
+        function showError(message) {
+            loadingSpinner.style.display = 'none';
+            mainContent.style.display = 'none';
+            errorMessage.style.display = 'block';
+            errorText.textContent = message;
+        }
+
+    </script>
+</body>
+</html>
