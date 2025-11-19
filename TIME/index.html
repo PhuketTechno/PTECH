@@ -2,200 +2,202 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ลงเวลาทำงาน</title>
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+  
   <style>
-    body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
-    .card-custom { border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    #signature-pad { border: 2px dashed #ccc; border-radius: 10px; touch-action: none; width: 100%; height: 200px; background: #fff; }
-    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+    body { background-color: #f0f2f5; font-family: 'Sarabun', sans-serif; user-select: none; }
+    .card-custom { border-radius: 16px; border: none; box-shadow: 0 8px 30px rgba(0,0,0,0.08); overflow: hidden; }
+    .profile-img { width: 90px; height: 90px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: -45px; background: #fff; }
+    .header-bg { background: linear-gradient(135deg, #0d6efd, #0dcaf0); height: 120px; width: 100%; }
+    
+    /* Signature Pad Styling */
+    .signature-wrapper { position: relative; width: 100%; height: 220px; border: 2px solid #e9ecef; border-radius: 12px; background: #fff; overflow: hidden; }
+    canvas#signature-pad { width: 100%; height: 100%; touch-action: none; }
+    
+    .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.3s; }
     .hidden { display: none !important; }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
   <!-- Loading Screen -->
   <div id="loading" class="loading-overlay">
     <div class="spinner-border text-primary mb-3" role="status"></div>
-    <h5 id="loading-text">กำลังโหลดข้อมูล...</h5>
+    <h6 id="loading-text" class="text-muted fw-light">กำลังเชื่อมต่อ...</h6>
   </div>
 
-  <div class="container py-4">
-    <div class="row justify-content-center">
-      <div class="col-md-6 col-12">
-        
-        <div class="card card-custom p-4 text-center">
-          <img id="user-picture" src="https://via.placeholder.com/100" class="rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; object-fit: cover; display:none;">
-          <h4 class="mb-1" id="user-name">User</h4>
-          <p class="text-muted" id="current-date">Loading...</p>
+  <div class="container py-4" style="max-width: 500px;">
+    <div class="card card-custom text-center">
+      
+      <div class="header-bg"></div>
+      
+      <div class="card-body pt-0 px-4 pb-4">
+        <img id="user-picture" src="https://via.placeholder.com/150" class="rounded-circle profile-img mb-3">
+        <h5 id="user-name" class="fw-bold mb-1">Guest</h5>
+        <p id="current-date" class="text-muted small mb-3">...</p>
 
-          <hr>
+        <!-- Status Message Area -->
+        <div id="alert-area" class="my-3 hidden">
+          <div id="alert-msg" class="alert alert-light border text-secondary py-2 small"></div>
+        </div>
 
-          <!-- Alert Box -->
-          <div id="alert-box" class="alert alert-warning hidden" role="alert"></div>
-
-          <!-- Form Area -->
-          <div id="form-area" class="hidden">
-            
-            <!-- GPS Status -->
-            <div class="mb-3">
-              <small class="text-secondary"><i class="fas fa-map-marker-alt text-danger"></i> พิกัดปัจจุบัน:</small><br>
-              <span id="location-status" class="badge bg-secondary">รอรับพิกัด...</span>
-            </div>
-
-            <!-- Signature Area -->
-            <div class="mb-3 text-start">
-              <label class="form-label fw-bold">ลายเซ็นต์ของคุณ:</label>
-              <canvas id="signature-pad"></canvas>
-              <button type="button" class="btn btn-sm btn-outline-secondary mt-1 w-100" onclick="clearSignature()">
-                <i class="fas fa-eraser"></i> ล้างลายเซ็นต์
-              </button>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="d-grid gap-2">
-              <button id="btn-in" class="btn btn-success btn-lg hidden" onclick="submitAttendance('เข้างาน')">
-                <i class="fas fa-sign-in-alt"></i> ลงเวลาเข้างาน
-              </button>
-              <button id="btn-out" class="btn btn-danger btn-lg hidden" onclick="submitAttendance('ออกงาน')">
-                <i class="fas fa-sign-out-alt"></i> ลงเวลาออกงาน
-              </button>
-            </div>
+        <!-- Main Interaction Area -->
+        <div id="interaction-area" class="hidden">
+          
+          <!-- GPS Badge -->
+          <div class="mb-3 d-flex justify-content-center align-items-center gap-2">
+             <span class="badge rounded-pill text-bg-light border fw-normal text-secondary">
+               <i class="fas fa-map-marker-alt text-danger me-1"></i> <span id="lat-display">-</span>, <span id="long-display">-</span>
+             </span>
           </div>
 
-        </div>
+          <!-- Signature Pad -->
+          <div class="text-start mb-3">
+            <label class="form-label small text-muted fw-bold ms-1">เซ็นชื่อเพื่อยืนยัน</label>
+            <div class="signature-wrapper">
+              <canvas id="signature-pad"></canvas>
+            </div>
+            <button class="btn btn-link btn-sm text-decoration-none text-muted w-100 mt-1" onclick="clearSignature()">
+              <i class="fas fa-redo-alt me-1"></i> ล้างลายเซ็นต์
+            </button>
+          </div>
+
+          <!-- Buttons -->
+          <div class="d-grid gap-2">
+            <button id="btn-in" class="btn btn-primary btn-lg py-3 shadow-sm hidden" onclick="submitAttendance('เข้างาน')">
+              <i class="fas fa-clock me-2"></i> ลงเวลาเข้างาน
+            </button>
+            <button id="btn-out" class="btn btn-warning btn-lg py-3 shadow-sm text-white hidden" onclick="submitAttendance('ออกงาน')">
+              <i class="fas fa-sign-out-alt me-2"></i> ลงเวลาออกงาน
+            </button>
+          </div>
+
+        </div> <!-- End Interaction Area -->
+
       </div>
     </div>
   </div>
 
-  <!-- Libraries -->
+  <!-- Scripts -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
-    // **************************************************
-    // ตั้งค่า Configuration
-    // 1. ใส่ LIFF ID
-    const LIFF_ID = '2008523830-oyWp2332'; 
-    // 2. ใส่ URL ของ Google Apps Script Web App ที่ Deploy แล้ว
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxP8XwyDo4NuUUmLkKsRmIrhOv8hnXQX6zXJu0E_1r9Q-iwJttjI-Ir7Xlh78-cjKvj/exec'; 
-    // **************************************************
+    // --- CONFIGURATION ---
+    const LIFF_ID = 'YOUR_LIFF_ID_HERE'; 
+    const SCRIPT_URL = 'YOUR_EXEC_URL_HERE'; 
+    // ---------------------
 
     let signaturePad;
-    let userProfile = {};
+    let userProfile = null;
     let currentLocation = { lat: null, long: null };
 
-    window.onload = async function() {
-      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      document.getElementById('current-date').innerText = new Date().toLocaleDateString('th-TH', dateOptions);
+    // Init
+    window.onload = async () => {
+      // Date Display
+      const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      document.getElementById('current-date').innerText = new Date().toLocaleDateString('th-TH', opts);
 
+      // Init Signature Pad (Vanilla JS - No jQuery)
       const canvas = document.getElementById('signature-pad');
-      const ratio =  Math.max(window.devicePixelRatio || 1, 1);
-      canvas.width = canvas.offsetWidth * ratio;
-      canvas.height = canvas.offsetHeight * ratio;
-      canvas.getContext("2d").scale(ratio, ratio);
-      signaturePad = new SignaturePad(canvas);
+      const resizeCanvas = () => {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+      };
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+      signaturePad = new SignaturePad(canvas, { backgroundColor: 'rgba(255, 255, 255, 0)', penColor: 'rgb(0, 0, 0)' });
 
+      // Init LIFF
       try {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
-          liff.login();
+          liff.login(); 
           return;
         }
-        
-        const profile = await liff.getProfile();
-        userProfile = profile;
-        document.getElementById('user-name').innerText = profile.displayName;
-        document.getElementById('user-picture').src = profile.pictureUrl;
-        document.getElementById('user-picture').style.display = 'block';
+        userProfile = await liff.getProfile();
+        document.getElementById('user-name').innerText = userProfile.displayName;
+        document.getElementById('user-picture').src = userProfile.pictureUrl;
 
+        // Start Process
         getLocation();
 
       } catch (err) {
-        showError('LIFF Error: ' + err.message);
+        showError('LIFF Error: ' + err);
       }
     };
 
+    // 1. Get Location
     function getLocation() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          (position) => {
-            currentLocation.lat = position.coords.latitude;
-            currentLocation.long = position.coords.longitude;
+          (pos) => {
+            currentLocation = { lat: pos.coords.latitude, long: pos.coords.longitude };
+            document.getElementById('lat-display').innerText = currentLocation.lat.toFixed(4);
+            document.getElementById('long-display').innerText = currentLocation.long.toFixed(4);
             
-            const locText = `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
-            const badge = document.getElementById('location-status');
-            badge.innerText = locText;
-            badge.classList.remove('bg-secondary');
-            badge.classList.add('bg-success');
-
+            // ได้พิกัดแล้ว -> เช็คสถานะ User
             checkUserStatus();
           },
-          (error) => {
-            let msg = "ไม่สามารถระบุพิกัดได้";
-            if(error.code == 1) msg = "กรุณาเปิด GPS และอนุญาตให้เข้าถึงตำแหน่ง";
-            showError(msg);
-            document.getElementById('location-status').innerText = "GPS Error";
-            document.getElementById('location-status').classList.add('bg-danger');
+          (err) => {
+            showError("กรุณาเปิด GPS เพื่อใช้งาน");
           },
           { enableHighAccuracy: true, timeout: 10000 }
         );
       } else {
-        showError("Browser นี้ไม่รองรับ Geolocation");
+        showError("Browser ไม่รองรับ GPS");
       }
     }
 
-    // เปลี่ยนจาก google.script.run เป็น fetch
-    function checkUserStatus() {
-      // ส่ง GET Request
-      const url = `${SCRIPT_URL}?action=getConfig&userId=${userProfile.userId}`;
-      
-      fetch(url)
-        .then(response => response.json())
-        .then(response => {
-          document.getElementById('loading').classList.add('hidden');
-          
-          if (response.message) {
-            const alertBox = document.getElementById('alert-box');
-            alertBox.innerText = response.message;
-            alertBox.classList.remove('hidden');
-          }
+    // 2. Check Status (Fetch API)
+    async function checkUserStatus() {
+      try {
+        showLoading(true, "กำลังตรวจสอบข้อมูล...");
+        const url = `${SCRIPT_URL}?action=getConfig&userId=${userProfile.userId}`;
+        const res = await fetch(url);
+        const data = await res.json();
 
-          if (response.mode !== 'none') {
-            document.getElementById('form-area').classList.remove('hidden');
-            if (response.mode === 'in') document.getElementById('btn-in').classList.remove('hidden');
-            if (response.mode === 'out') document.getElementById('btn-out').classList.remove('hidden');
-          }
-        })
-        .catch(err => {
-           showError('Connection Error: ' + err);
-        });
+        showLoading(false);
+
+        // Reset UI Elements
+        document.getElementById('btn-in').classList.add('hidden');
+        document.getElementById('btn-out').classList.add('hidden');
+        document.getElementById('interaction-area').classList.add('hidden');
+        document.getElementById('alert-area').classList.add('hidden');
+
+        if (data.mode === 'none') {
+          // กรณีไม่มีสิทธิ์ลงเวลา (หรือลงไปแล้ว)
+          const msgBox = document.getElementById('alert-msg');
+          msgBox.className = 'alert alert-info border text-center';
+          msgBox.innerHTML = `<i class="fas fa-info-circle me-1"></i> ${data.message}`;
+          document.getElementById('alert-area').classList.remove('hidden');
+        } else {
+          // กรณีมีสิทธิ์ลงเวลา (เข้า หรือ ออก)
+          document.getElementById('interaction-area').classList.remove('hidden');
+          if (data.mode === 'in') document.getElementById('btn-in').classList.remove('hidden');
+          if (data.mode === 'out') document.getElementById('btn-out').classList.remove('hidden');
+        }
+
+      } catch (err) {
+        showError('Connection Error: ' + err);
+      }
     }
 
-    function clearSignature() {
-      signaturePad.clear();
-    }
+    // 3. Submit
+    async function submitAttendance(type) {
+      if (signaturePad.isEmpty()) return Swal.fire('แจ้งเตือน', 'กรุณาเซ็นชื่อ', 'warning');
+      if (!currentLocation.lat) return Swal.fire('แจ้งเตือน', 'ไม่พบพิกัด GPS', 'warning');
 
-    function submitAttendance(type) {
-      if (signaturePad.isEmpty()) {
-        Swal.fire('แจ้งเตือน', 'กรุณาเซ็นชื่อก่อนบันทึก', 'warning');
-        return;
-      }
-      if (!currentLocation.lat) {
-        Swal.fire('แจ้งเตือน', 'ไม่พบพิกัด GPS กรุณารอสักครู่หรือรีเฟรช', 'warning');
-        return;
-      }
+      showLoading(true, "กำลังบันทึกข้อมูล...");
 
-      document.getElementById('loading').classList.remove('hidden');
-      document.getElementById('loading-text').innerText = 'กำลังบันทึกข้อมูล...';
-
-      const data = {
+      const payload = {
         action: 'saveAttendance',
         userId: userProfile.userId,
         displayName: userProfile.displayName,
@@ -205,38 +207,58 @@
         signature: signaturePad.toDataURL()
       };
 
-      // ส่ง POST Request
-      // หมายเหตุ: Google Apps Script Web App รองรับการ POST แบบ text/plain ได้ดีที่สุดเพื่อเลี่ยง CORS Preflight
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(data)
-      })
-      .then(response => response.json())
-      .then(res => {
-          document.getElementById('loading').classList.add('hidden');
-          if (res.success) {
-            Swal.fire({
-              icon: 'success',
-              title: 'สำเร็จ',
-              text: res.message,
-            }).then(() => {
-              liff.closeWindow();
-            });
-          } else {
-            Swal.fire('ผิดพลาด', res.message, 'error');
-          }
-      })
-      .catch(err => {
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        showLoading(false);
+
+        if (data.success) {
+          await Swal.fire({
+            icon: 'success',
+            title: 'บันทึกสำเร็จ',
+            text: data.message,
+            timer: 2000,
+            showConfirmButton: false
+          });
+          
+          // *** Key Change: Clear Signature & Reload Status (Back to Start) ***
+          clearSignature();
+          checkUserStatus(); // เรียกฟังก์ชันนี้ใหม่ เพื่อซ่อนฟอร์มและแสดงข้อความสถานะ
+
+        } else {
+          Swal.fire('ผิดพลาด', data.message, 'error');
+        }
+
+      } catch (err) {
         showError('Submit Error: ' + err);
-      });
+      }
+    }
+
+    function clearSignature() {
+      signaturePad.clear();
+    }
+
+    function showLoading(isShow, text = "") {
+      const el = document.getElementById('loading');
+      if (isShow) {
+        document.getElementById('loading-text').innerText = text;
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
     }
 
     function showError(msg) {
-      document.getElementById('loading').classList.add('hidden');
-      const alertBox = document.getElementById('alert-box');
-      alertBox.innerText = msg;
-      alertBox.classList.remove('hidden');
-      alertBox.classList.add('alert-danger');
+      showLoading(false);
+      document.getElementById('interaction-area').classList.add('hidden');
+      const msgBox = document.getElementById('alert-msg');
+      msgBox.className = 'alert alert-danger text-center';
+      msgBox.innerText = msg;
+      document.getElementById('alert-area').classList.remove('hidden');
     }
   </script>
 </body>
