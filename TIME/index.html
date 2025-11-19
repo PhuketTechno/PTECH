@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ลงเวลาทำงาน</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
+    .card-custom { border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    #signature-pad { border: 2px dashed #ccc; border-radius: 10px; touch-action: none; width: 100%; height: 200px; background: #fff; }
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+    .hidden { display: none !important; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading" class="loading-overlay">
+    <div class="spinner-border text-primary mb-3" role="status"></div>
+    <h5 id="loading-text">กำลังโหลดข้อมูล...</h5>
+  </div>
+
+  <div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-12">
+        
+        <div class="card card-custom p-4 text-center">
+          <img id="user-picture" src="https://via.placeholder.com/100" class="rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; object-fit: cover; display:none;">
+          <h4 class="mb-1" id="user-name">User</h4>
+          <p class="text-muted" id="current-date">Loading...</p>
+
+          <hr>
+
+          <!-- Alert Box -->
+          <div id="alert-box" class="alert alert-warning hidden" role="alert"></div>
+
+          <!-- Form Area -->
+          <div id="form-area" class="hidden">
+            
+            <!-- GPS Status -->
+            <div class="mb-3">
+              <small class="text-secondary"><i class="fas fa-map-marker-alt text-danger"></i> พิกัดปัจจุบัน:</small><br>
+              <span id="location-status" class="badge bg-secondary">รอรับพิกัด...</span>
+            </div>
+
+            <!-- Signature Area -->
+            <div class="mb-3 text-start">
+              <label class="form-label fw-bold">ลายเซ็นต์ของคุณ:</label>
+              <canvas id="signature-pad"></canvas>
+              <button type="button" class="btn btn-sm btn-outline-secondary mt-1 w-100" onclick="clearSignature()">
+                <i class="fas fa-eraser"></i> ล้างลายเซ็นต์
+              </button>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2">
+              <button id="btn-in" class="btn btn-success btn-lg hidden" onclick="submitAttendance('เข้างาน')">
+                <i class="fas fa-sign-in-alt"></i> ลงเวลาเข้างาน
+              </button>
+              <button id="btn-out" class="btn btn-danger btn-lg hidden" onclick="submitAttendance('ออกงาน')">
+                <i class="fas fa-sign-out-alt"></i> ลงเวลาออกงาน
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    // **************************************************
+    // ตั้งค่า Configuration
+    // 1. ใส่ LIFF ID
+    const LIFF_ID = '2008523830-oyWp2332'; 
+    // 2. ใส่ URL ของ Google Apps Script Web App ที่ Deploy แล้ว
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxP8XwyDo4NuUUmLkKsRmIrhOv8hnXQX6zXJu0E_1r9Q-iwJttjI-Ir7Xlh78-cjKvj/exec'; 
+    // **************************************************
+
+    let signaturePad;
+    let userProfile = {};
+    let currentLocation = { lat: null, long: null };
+
+    window.onload = async function() {
+      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('current-date').innerText = new Date().toLocaleDateString('th-TH', dateOptions);
+
+      const canvas = document.getElementById('signature-pad');
+      const ratio =  Math.max(window.devicePixelRatio || 1, 1);
+      canvas.width = canvas.offsetWidth * ratio;
+      canvas.height = canvas.offsetHeight * ratio;
+      canvas.getContext("2d").scale(ratio, ratio);
+      signaturePad = new SignaturePad(canvas);
+
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+        
+        const profile = await liff.getProfile();
+        userProfile = profile;
+        document.getElementById('user-name').innerText = profile.displayName;
+        document.getElementById('user-picture').src = profile.pictureUrl;
+        document.getElementById('user-picture').style.display = 'block';
+
+        getLocation();
+
+      } catch (err) {
+        showError('LIFF Error: ' + err.message);
+      }
+    };
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            currentLocation.lat = position.coords.latitude;
+            currentLocation.long = position.coords.longitude;
+            
+            const locText = `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
+            const badge = document.getElementById('location-status');
+            badge.innerText = locText;
+            badge.classList.remove('bg-secondary');
+            badge.classList.add('bg-success');
+
+            checkUserStatus();
+          },
+          (error) => {
+            let msg = "ไม่สามารถระบุพิกัดได้";
+            if(error.code == 1) msg = "กรุณาเปิด GPS และอนุญาตให้เข้าถึงตำแหน่ง";
+            showError(msg);
+            document.getElementById('location-status').innerText = "GPS Error";
+            document.getElementById('location-status').classList.add('bg-danger');
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      } else {
+        showError("Browser นี้ไม่รองรับ Geolocation");
+      }
+    }
+
+    // เปลี่ยนจาก google.script.run เป็น fetch
+    function checkUserStatus() {
+      // ส่ง GET Request
+      const url = `${SCRIPT_URL}?action=getConfig&userId=${userProfile.userId}`;
+      
+      fetch(url)
+        .then(response => response.json())
+        .then(response => {
+          document.getElementById('loading').classList.add('hidden');
+          
+          if (response.message) {
+            const alertBox = document.getElementById('alert-box');
+            alertBox.innerText = response.message;
+            alertBox.classList.remove('hidden');
+          }
+
+          if (response.mode !== 'none') {
+            document.getElementById('form-area').classList.remove('hidden');
+            if (response.mode === 'in') document.getElementById('btn-in').classList.remove('hidden');
+            if (response.mode === 'out') document.getElementById('btn-out').classList.remove('hidden');
+          }
+        })
+        .catch(err => {
+           showError('Connection Error: ' + err);
+        });
+    }
+
+    function clearSignature() {
+      signaturePad.clear();
+    }
+
+    function submitAttendance(type) {
+      if (signaturePad.isEmpty()) {
+        Swal.fire('แจ้งเตือน', 'กรุณาเซ็นชื่อก่อนบันทึก', 'warning');
+        return;
+      }
+      if (!currentLocation.lat) {
+        Swal.fire('แจ้งเตือน', 'ไม่พบพิกัด GPS กรุณารอสักครู่หรือรีเฟรช', 'warning');
+        return;
+      }
+
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('loading-text').innerText = 'กำลังบันทึกข้อมูล...';
+
+      const data = {
+        action: 'saveAttendance',
+        userId: userProfile.userId,
+        displayName: userProfile.displayName,
+        type: type,
+        lat: currentLocation.lat,
+        long: currentLocation.long,
+        signature: signaturePad.toDataURL()
+      };
+
+      // ส่ง POST Request
+      // หมายเหตุ: Google Apps Script Web App รองรับการ POST แบบ text/plain ได้ดีที่สุดเพื่อเลี่ยง CORS Preflight
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      })
+      .then(response => response.json())
+      .then(res => {
+          document.getElementById('loading').classList.add('hidden');
+          if (res.success) {
+            Swal.fire({
+              icon: 'success',
+              title: 'สำเร็จ',
+              text: res.message,
+            }).then(() => {
+              liff.closeWindow();
+            });
+          } else {
+            Swal.fire('ผิดพลาด', res.message, 'error');
+          }
+      })
+      .catch(err => {
+        showError('Submit Error: ' + err);
+      });
+    }
+
+    function showError(msg) {
+      document.getElementById('loading').classList.add('hidden');
+      const alertBox = document.getElementById('alert-box');
+      alertBox.innerText = msg;
+      alertBox.classList.remove('hidden');
+      alertBox.classList.add('alert-danger');
+    }
+  </script>
+</body>
+</html>
