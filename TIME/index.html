@@ -150,6 +150,10 @@
         showError('LIFF Error: ' + err);
       }
     };
+  setTimeout(() => {
+    resizeCanvas();
+}, 100);
+
 
     // ตั้งค่า Signature Pad และการ Resize
     function initSignaturePad() {
@@ -315,7 +319,7 @@
       setLoading(false);
       Swal.fire('Error', msg, 'error');
     }
-
+    
   </script>
 </body>
 </html>
