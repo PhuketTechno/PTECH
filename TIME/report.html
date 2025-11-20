@@ -215,8 +215,8 @@
                 // Get header info
                 const schoolName = "วิทยาลัยเทคโนโลยีภูเก็ต"; // ใช้ภาษาอังกฤษเพื่อเลี่ยงปัญหา font
                 const reportTitle = "บันทึกเวลาทำงานครู และบุคลากร"; 
-                const selectedDateText = document.getElementById('report-date').value;
-
+                const selectedDateText = dformatDateForDisplay(ocument.getElementById('report-date').value);
+         
                 // Page Header
                 doc.setFont('Prompt','normal');
                 doc.setFontSize(14);
