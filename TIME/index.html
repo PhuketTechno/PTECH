@@ -30,7 +30,6 @@
       overflow: hidden;
     }
     
-    /* ตัว Canvas ต้องกำหนดขนาดให้เต็ม */
     canvas {
       display: block;
       width: 100%;
@@ -74,12 +73,6 @@
         <!-- Form Area -->
         <div id="form-area" class="hidden text-start">
           
-          <!-- GPS -->
-          <div class="mb-3 d-flex justify-content-between align-items-center">
-            <span class="fw-bold small text-muted"><i class="fas fa-map-marker-alt text-danger"></i> พิกัดของคุณ</span>
-            <span id="gps-badge" class="badge bg-light text-dark border">รอพิกัด...</span>
-          </div>
-
           <!-- Signature Pad -->
           <div class="mb-3">
             <label class="form-label small fw-bold text-muted">เซ็นชื่อที่นี่</label>
@@ -108,15 +101,14 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
-    // ==========================================
     // --- CONFIGURATION ---
     const LIFF_ID = '2008523830-oyWp2332'; 
     const API_URL = 'https://script.google.com/macros/s/AKfycbxP8XwyDo4NuUUmLkKsRmIrhOv8hnXQX6zXJu0E_1r9Q-iwJttjI-Ir7Xlh78-cjKvj/exec'; 
     // ---------------------
+
     
-    let signaturePad = null; // เก็บตัวแปรไว้ global
+    let signaturePad = null;
     let userProfile = null;
-    let userLocation = { lat: null, long: null };
 
     window.onload = async () => {
       // 1. Set Date
@@ -136,32 +128,29 @@
         document.getElementById('user-pic').src = userProfile.pictureUrl;
         document.getElementById('user-pic').classList.remove('hidden');
 
-        // 3. Start Flow
-        getLocation();
+        // 3. Check Status directly (No Location needed)
+        checkStatus();
 
       } catch (err) {
         showError('LIFF Init Failed: ' + err);
       }
     };
 
-    // --- Signature Management (หัวใจสำคัญของการแก้ไข) ---
+    // --- Signature Management (Lazy Init) ---
     function initSignaturePad() {
       const canvas = document.getElementById('signature-canvas');
       const container = canvas.parentElement;
 
-      // ต้องทำลาย Instance เก่าทิ้งก่อน (ถ้ามี)
       if (signaturePad) {
         signaturePad.off();
         signaturePad = null;
       }
 
-      // กำหนดขนาด Canvas ให้ตรงกับ Container (Pixel-perfect)
       const ratio = Math.max(window.devicePixelRatio || 1, 1);
       canvas.width = container.offsetWidth * ratio;
       canvas.height = container.offsetHeight * ratio;
       canvas.getContext("2d").scale(ratio, ratio);
 
-      // สร้าง Instance ใหม่
       signaturePad = new SignaturePad(canvas, {
         backgroundColor: 'rgb(255, 255, 255)',
         penColor: 'rgb(0, 0, 0)'
@@ -170,25 +159,6 @@
 
     function resetSignature() {
       if (signaturePad) signaturePad.clear();
-    }
-    // -------------------------------------------------
-
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            userLocation = { lat: pos.coords.latitude, long: pos.coords.longitude };
-            document.getElementById('gps-badge').innerHTML = `<span class="text-success">${userLocation.lat.toFixed(4)}, ${userLocation.long.toFixed(4)}</span>`;
-            checkStatus();
-          },
-          (err) => {
-            showError("กรุณาเปิด GPS แล้วรีเฟรชใหม่");
-          },
-          { enableHighAccuracy: true, timeout: 10000 }
-        );
-      } else {
-        showError("อุปกรณ์ไม่รองรับ GPS");
-      }
     }
 
     async function checkStatus() {
@@ -204,25 +174,22 @@
     }
 
     function renderUI(data) {
-      // ซ่อนทั้งหมดก่อน
       document.getElementById('alert-area').classList.add('hidden');
       document.getElementById('form-area').classList.add('hidden');
       document.getElementById('btn-in').classList.add('hidden');
       document.getElementById('btn-out').classList.add('hidden');
 
       if (data.mode === 'none') {
-        // แสดง Alert
         const alertBox = document.getElementById('alert-box');
         alertBox.innerHTML = `<i class="fas fa-info-circle me-2"></i>${data.message}`;
         alertBox.className = data.message.includes('เรียบร้อย') ? 'alert alert-success border-0' : 'alert alert-secondary border-0';
         document.getElementById('alert-area').classList.remove('hidden');
       } else {
-        // แสดง Form
         document.getElementById('form-area').classList.remove('hidden');
         if (data.mode === 'in') document.getElementById('btn-in').classList.remove('hidden');
         if (data.mode === 'out') document.getElementById('btn-out').classList.remove('hidden');
 
-        // *** เรียก Init Pad ตรงนี้เท่านั้น (เพื่อให้ Canvas มีขนาดจริงก่อน) ***
+        // Init Signature Pad when visible
         setTimeout(() => {
            initSignaturePad();
         }, 100);
@@ -236,13 +203,12 @@
       
       setLoading(true, "กำลังบันทึก...");
       
+      // Payload without location
       const payload = {
         action: 'saveAttendance',
         userId: userProfile.userId,
         displayName: userProfile.displayName,
         type: type,
-        lat: userLocation.lat,
-        long: userLocation.long,
         signature: signaturePad.toDataURL()
       };
 
@@ -258,7 +224,7 @@
         if (result.success) {
           await Swal.fire({ icon: 'success', title: 'บันทึกสำเร็จ', timer: 1500, showConfirmButton: false });
           resetSignature();
-          checkStatus(); // กลับไปหน้าแรก (โหลดสถานะใหม่)
+          checkStatus(); // Reload status
         } else {
           Swal.fire('ผิดพลาด', result.message, 'error');
         }
@@ -271,8 +237,8 @@
     function setLoading(show, text) {
       const el = document.getElementById('loading');
       document.getElementById('loading-text').innerText = text;
-      if (show) el.classList.remove('hidden'); // ใช้ remove class hidden เพื่อแสดง
-      else el.classList.add('hidden'); // ใช้ add class hidden เพื่อซ่อน
+      if (show) el.classList.remove('hidden');
+      else el.classList.add('hidden');
     }
 
     function showError(msg) {
