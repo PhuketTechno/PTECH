@@ -209,7 +209,7 @@
                     this.addFont('Prompt-normal.ttf', 'Prompt', 'normal');
                     };
                 
-                doc.API.events.push(['addFonts', callAddFont])
+                jsPDF.API.events.push(['addFonts', callAddFont])
                 // หมายเหตุ: ภาษาไทยใน jsPDF client-side อาจแสดงผลไม่ถูกต้องหากไม่มีการ embed font
                 // การเพิ่ม font Sarabun แบบ base64 มีขนาดใหญ่มาก จึงใช้ font มาตรฐานไปก่อน
                 // หากต้องการภาษาไทยสมบูรณ์แนะนำให้ใช้ browser print to PDF หรือ embed font base64
