@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายงานลงเวลา</title>
+    <!-- Bootstrap 5 CSS --><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts --><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- jsPDF for PDF export --><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; }
+        .card-report { border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .table th, .table td { vertical-align: middle; }
+        .signature-preview { max-height: 40px; width: auto; object-fit: contain; }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .hidden { display: none !important; }
+        @media print {
+            body { background-color: #fff; }
+            .no-print { display: none !important; }
+            .card-report { border: none; box-shadow: none; }
+            /* กำหนดขนาด A4 สำหรับการพิมพ์ */
+            @page {
+                size: A4 portrait;
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Overlay --><div id="loading-report" class="loading-overlay">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <span id="loading-report-text" class="text-muted small">กำลังโหลดรายงาน...</span>
+    </div>
+
+    <div class="container py-4">
+        <div class="card card-report p-4">
+            <h4 class="mb-4 text-center">รายงานลงเวลาเข้าทำงาน</h4>
+            
+            <!-- Filter Controls --><div class="row g-3 mb-4 no-print">
+                <div class="col-md-5">
+                    <label for="report-date" class="form-label small text-muted">เลือกวัน</label>
+                    <select id="report-date" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label for="report-type" class="form-label small text-muted">ประเภท</label>
+                    <select id="report-type" class="form-select">
+                        <option value="เข้างาน">เข้างาน</option>
+                        <option value="ออกงาน">ออกงาน</option>
+                        <option value="ทั้งหมด">ทั้งหมด</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="loadReportData()"><i class="bi bi-funnel me-1"></i> แสดง</button>
+                </div>
+            </div>
+
+            <div class="row mb-3 no-print">
+                <div class="col-12">
+                    <button class="btn btn-success w-100" onclick="exportPdf()"><i class="bi bi-file-earmark-pdf me-1"></i> ส่งออกเป็น PDF</button>
+                </div>
+            </div>
+
+            <!-- Report Header (for print) --><div class="text-center mb-4 d-none d-print-block">
+                <h5 class="mb-1">วิทยาลัยเทคโนโลยีภูเก็ต</h5>
+                <p class="mb-1">บันทึกเวลาเข้าทำงานบุคลากรทางการศึกษา เจ้าหน้าที่ ปีการศึกษา 2568</p>
+                <p class="mb-0" id="report-print-date">...</p>
+            </div>
+
+            <!-- Report Table --><div class="table-responsive">
+                <table class="table table-bordered table-striped" id="report-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">ที่</th>
+                            <th style="width: 20%;">รหัสประจำตัว</th>
+                            <th style="width: 30%;">ชื่อ - นามสกุล</th>
+                            <th style="width: 15%;">เวลา</th>
+                            <th style="width: 15%;">ประเภท</th>
+                            <th style="width: 15%;">ลายเซ็นต์</th>
+                        </tr>
+                    </thead>
+                    <tbody id="report-tbody">
+                        <!-- Report rows will be inserted here by JavaScript --><tr><td colspan="6" class="text-center text-muted">กรุณาเลือกวันและกด "แสดง"</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-center mt-3 no-print">
+                <a href="index.html" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i> กลับหน้าหลัก</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS --><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // ================= CONFIG =================
+        const API_URL = 'YOUR_APPS_SCRIPT_URL_HERE'; 
+        // ==========================================
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // โหลดวันที่ที่มีข้อมูลเมื่อหน้าเว็บโหลด
+            await loadReportDates();
+            // โหลดข้อมูลรายงานสำหรับวันล่าสุด (ถ้ามี)
+            loadReportData();
+        });
+
+        async function loadReportDates() {
+            setLoadingReport(true, 'กำลังโหลดวันที่...');
+            try {
+                const response = await fetch(`${API_URL}?action=getReportDates`);
+                const result = await response.json();
+                setLoadingReport(false);
+
+                if (result.success && result.dates.length > 0) {
+                    const selectElement = document.getElementById('report-date');
+                    selectElement.innerHTML = ''; // Clear existing options
+                    result.dates.forEach(dateStr => {
+                        const option = document.createElement('option');
+                        option.value = dateStr;
+                        option.textContent = formatDateForDisplay(dateStr);
+                        selectElement.appendChild(option);
+                    });
+                    // เลือกวันที่ล่าสุดเป็น Default
+                    selectElement.value = result.dates[0];
+                } else {
+                    document.getElementById('report-date').innerHTML = '<option value="">ไม่มีข้อมูล</option>';
+                }
+            } catch (error) {
+                setLoadingReport(false);
+                Swal.fire('Error', 'ไม่สามารถโหลดวันที่รายงานได้: ' + error.message, 'error');
+            }
+        }
+
+        async function loadReportData() {
+            const selectedDate = document.getElementById('report-date').value;
+            const reportType = document.getElementById('report-type').value;
+
+            if (!selectedDate) {
+                document.getElementById('report-tbody').innerHTML = '<tr><td colspan="6" class="text-center text-muted">กรุณาเลือกวัน</td></tr>';
+                return;
+            }
+
+            setLoadingReport(true, 'กำลังโหลดข้อมูลรายงาน...');
+            try {
+                const response = await fetch(`${API_URL}?action=getReportData&selectedDate=${selectedDate}&reportType=${reportType}`);
+                const result = await response.json();
+                setLoadingReport(false);
+
+                const tbody = document.getElementById('report-tbody');
+                tbody.innerHTML = ''; // Clear existing data
+
+                // Update print header date
+                document.getElementById('report-print-date').textContent = `วัน ${formatDateForDisplay(selectedDate)}`;
+
+                if (result.success && result.data.length > 0) {
+                    result.data.forEach((row, index) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${row.userId}</td>
+                            <td>${row.displayName}</td>
+                            <td>${row.time}</td>
+                            <td>${row.type}</td>
+                            <td>${row.signatureUrl ? `<img src="${row.signatureUrl}" class="signature-preview" alt="Signature">` : '-'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">ไม่พบข้อมูลสำหรับวันที่และประเภทที่เลือก</td></tr>';
+                }
+            } catch (error) {
+                setLoadingReport(false);
+                Swal.fire('Error', 'ไม่สามารถโหลดข้อมูลรายงานได้: ' + error.message, 'error');
+            }
+        }
+
+        function formatDateForDisplay(dateString) {
+            const [year, month, day] = dateString.split('-');
+            const date = new Date(year, month - 1, day); // Month is 0-indexed
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            return date.toLocaleDateString('th-TH', options);
+        }
+
+        function setLoadingReport(show, text) {
+            const el = document.getElementById('loading-report');
+            document.getElementById('loading-report-text').innerText = text;
+            if (show) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+
+        async function exportPdf() {
+            setLoadingReport(true, 'กำลังสร้าง PDF...');
+            
+            try {
+                // รอให้ jsPDF โหลดเสร็จ
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4'); // 'p' for portrait, 'mm' for millimeters, 'a4' for A4 size
+
+                // หมายเหตุ: ภาษาไทยใน jsPDF client-side อาจแสดงผลไม่ถูกต้องหากไม่มีการ embed font
+                // การเพิ่ม font Sarabun แบบ base64 มีขนาดใหญ่มาก จึงใช้ font มาตรฐานไปก่อน
+                // หากต้องการภาษาไทยสมบูรณ์แนะนำให้ใช้ browser print to PDF หรือ embed font base64
+
+                // Get header info
+                const schoolName = "Phuket Technology College"; // ใช้ภาษาอังกฤษเพื่อเลี่ยงปัญหา font
+                const reportTitle = "Attendance Report"; 
+                const selectedDateText = document.getElementById('report-date').value;
+
+                // Page Header
+                doc.setFontSize(14);
+                doc.text(schoolName, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+                doc.setFontSize(12);
+                doc.text(reportTitle, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
+                doc.text("Date: " + selectedDateText, doc.internal.pageSize.getWidth() / 2, 29, { align: 'center' });
+                
+                // ใช้ autoTable สร้างตารางจาก HTML
+                doc.autoTable({ 
+                    html: '#report-table',
+                    startY: 35,
+                    theme: 'grid',
+                    headStyles: { fillColor: [13, 110, 253] }, // สีน้ำเงิน Bootstrap
+                    styles: { font: 'helvetica', fontSize: 10 },
+                    didDrawCell: function(data) {
+                        // จัดการรูปภาพลายเซ็นต์ใน PDF (ถ้ามี)
+                        if (data.column.index === 5 && data.cell.section === 'body') {
+                             var td = data.cell.raw;
+                             var img = td.getElementsByTagName('img')[0];
+                             if (img) {
+                                 // เนื่องจากข้อจำกัด cross-origin อาจทำให้ไม่สามารถดึงภาพลง PDF ได้โดยตรงใน client-side
+                                 // data.cell.text = '[Signed]'; 
+                             }
+                        }
+                    }
+                });
+
+                doc.save('attendance-report.pdf');
+                setLoadingReport(false);
+
+            } catch (err) {
+                console.error(err);
+                setLoadingReport(false);
+                Swal.fire('Export Error', 'ไม่สามารถสร้าง PDF ได้: ' + err.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
