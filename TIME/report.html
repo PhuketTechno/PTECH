@@ -44,11 +44,11 @@
             <h4 class="mb-4 text-center">📜รายงานลงเวลา</h4>
             
             <!-- Filter Controls --><div class="row g-3 mb-4 no-print">
-                <div class="col-md-3">
+                <div class="col-md-6">
                     <label for="report-date" class="form-label small text-muted">เลือกวัน</label>
                     <select id="report-date" class="form-select"></select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label for="report-type" class="form-label small text-muted">ประเภท</label>
                     <select id="report-type" class="form-select">
                         <option value="เข้างาน">เข้างาน</option>
@@ -56,12 +56,12 @@
                         <option value="ทั้งหมด">ทั้งหมด</option>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
+                <div class="col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100" onclick="loadReportData()"><i class="bi bi-funnel me-1"></i> แสดง</button>
                 </div>
 
-                <div class="col-md-3 d-flex align-items-end">
-                    <button class="btn btn-success w-100" onclick="exportPdf()"><i class="bi bi-file-earmark-pdf me-1"></i> ส่งออกเป็น PDF</button>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-success w-100" onclick="exportPdf()"><i class="bi bi-file-earmark-pdf me-1"></i>📄PDF</button>
                 </div>                
             </div>
 
