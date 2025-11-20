@@ -220,7 +220,7 @@
                 const selectedDateText = document.getElementById('report-date').value;
 
                 // Page Header
-                doc.setFont('Prompt')
+                doc.setFont('Prompt','normal');
                 doc.setFontSize(14);
                 doc.text(schoolName, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
                 doc.setFontSize(12);
