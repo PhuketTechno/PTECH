@@ -78,7 +78,6 @@
                     <thead>
                         <tr>
                             <th style="width: 5%;">ที่</th>
-                            <th style="width: 20%;">รหัสประจำตัว</th>
                             <th style="width: 30%;">ชื่อ - นามสกุล</th>
                             <th style="width: 15%;">เวลา</th>
                             <th style="width: 15%;">ประเภท</th>
@@ -165,11 +164,10 @@
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
                             <td>${index + 1}</td>
-                            <td>${row.userId}</td>
-                            <td>${row.displayName}</td>
+                            <td>${row.kruName}</td>
                             <td>${row.time}</td>
                             <td>${row.type}</td>
-                            <td>${row.signatureUrl ? `<img src="${row.signatureUrl}" class="signature-preview" alt="Signature">` : '-'}</td>
+                            <td>${row.signature ? `<img src="${row.signature}" class="signature-preview" alt="Signature">` : '-'}</td>
                         `;
                         tbody.appendChild(tr);
                     });
