@@ -558,11 +558,17 @@
     return `https://drive.google.com/file/d/${fileId}/view`;
   }
 
-  async function fetchAsBlobSafe(fileId) {
-    if (!fileId) return null;
+  async function fetchAsBlobSafe(fileIdOrUrl) {
+    if (!fileIdOrUrl) return null;
+    let fileId = fileIdOrUrl.trim();
+    const driveMatch = fileId.match(/(?:(?:\/d\/)|(?:[?&]id=))([a-zA-Z0-9_-]{25,})/);
+    if (driveMatch && driveMatch[1]) {
+      fileId = driveMatch[1];
+    }
+
     try {
       const { data, error } = await sb.functions.invoke('fetch-file', {
-        body: { fileId },
+        body: { mode: 'fetch_file', fileId: fileId },
       });
       if (!error && data && data.base64) {
         const binaryStr = atob(data.base64);
@@ -571,6 +577,7 @@
         return new Blob([bytes], { type: data.mimeType || 'application/octet-stream' });
       }
       if (data && data.error) console.warn('fetchAsBlobSafe: Edge Function returned logic error →', data.error);
+      if (error) console.warn('fetchAsBlobSafe: Edge Function fetch-file error →', error);
     } catch (e) {
       console.warn('fetchAsBlobSafe ล้มเหลว →', e.message);
     }
