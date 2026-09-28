@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>สมัครเรียนทางออนไลน์</title>
+  <link rel="icon" id="favicon" href="">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+  <link href="assets/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <nav class="navbar site-nav py-3">
+    <div class="container d-flex justify-content-between align-items-center">
+      <a class="navbar-brand d-flex align-items-center gap-2 m-0" href="index.html">
+        <img id="nav-logo" class="nav-logo nav-logo-slide-in d-none" alt="Logo" style="height: 45px;">
+        <div class="d-none d-sm-block text-primary lh-sm">
+          <span id="nav-school-name" class="fw-bolder fs-5 d-block">วิทยาลัยฯ</span>
+          <span id="nav-school-name-en" class="fs-6 d-block opacity-75 d-none">TECHNOLOGY COLLEGE</span>
+        </div>
+      </a>
+      <a href="index.html" class="btn btn-brand-outline rounded-pill px-3 d-flex align-items-center">
+        <i class="bi bi-house-door-fill me-2"></i>กลับหน้าแรก
+      </a>
+    </div>
+  </nav>
+
+  <main class="container py-5">
+
+
+        <section id="closed-section" class="d-none text-center py-5">
+      <i class="bi bi-lock display-1 text-brand"></i>
+      <h2 class="mt-3">ขณะนี้ปิดรับสมัครเรียนชั่วคราว</h2>
+      <p class="section-sub">กรุณาติดตามข่าวสารการเปิดรับสมัครรอบถัดไป</p>
+      <a href="index.html" class="btn btn-brand-outline mt-2">กลับหน้าแรก</a>
+    </section>
+
+
+        <section id="login-section">
+      <div class="mx-auto" style="max-width:960px">
+        <div class="row g-4 align-items-stretch">
+
+
+                    <div class="col-lg-6">
+            <div class="card-soft p-4 p-md-5 h-100"
+              style="background:linear-gradient(135deg,var(--navy) 0%,var(--navy-deep) 100%);color:#fff;border:none;">
+              <h4 class="mb-3" style="font-weight:700;"><i class="bi bi-info-circle-fill me-2"></i>คำแนะนำก่อนสมัคร</h4>
+              <p class="mb-3" style="opacity:.92;line-height:1.8;">
+                สำหรับนักเรียนที่ <strong>ยังไม่เคยสมัครเรียน</strong><br>
+                ให้ใส่ <strong>เลขประจำตัวประชาชนของนักเรียน</strong> ไปก่อนได้เลย ระบบจะพาไปกรอกใบสมัครใหม่โดยอัตโนมัติ
+              </p>
+              <hr style="border-color:rgba(255,255,255,.3);">
+              <h5 class="mb-3" style="font-weight:600;"><i class="bi bi-folder2-open me-2"></i>เอกสารประกอบการสมัครเรียน
+              </h5>
+              <ul class="list-unstyled mb-0" style="opacity:.92;line-height:2;">
+                <li><i class="bi bi-check-circle-fill me-2" style="color:#8fffb0;"></i>รูปถ่ายขนาด 1 นิ้ว</li>
+                <li><i class="bi bi-check-circle-fill me-2" style="color:#8fffb0;"></i>สำเนาบัตรประชาชน</li>
+                <li><i class="bi bi-check-circle-fill me-2" style="color:#8fffb0;"></i>สำเนาทะเบียนบ้าน</li>
+              </ul>
+            </div>
+          </div>
+
+
+                    <div class="col-lg-6" id="apply-video-col">
+            <div class="card-soft h-100 p-2" style="background:#000;">
+              <div class="ratio ratio-16x9 h-100" id="apply-video-container"
+                style="border-radius: var(--radius-sm); overflow: hidden;">
+
+                                <div class="d-flex align-items-center justify-content-center text-white-50">
+                  <i class="bi bi-play-btn" style="font-size: 3rem;"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+                    <div class="col-12 mt-lg-0">
+            <div class="card-soft p-4 p-md-5 d-flex flex-column justify-content-center">
+              <h2 class="section-title text-center mb-1">เริ่มต้นสมัครเรียน</h2>
+              <p class="section-sub text-center mb-4">กรอกเลขประจำตัวประชาชนเพื่อตรวจสอบสถานะ<br>หากยังไม่เคยสมัคร
+                ระบบจะพาไปกรอกใบสมัครใหม่</p>
+              <form id="form-login" class="mx-auto w-100" style="max-width: 480px;">
+                <label class="form-label text-center d-block">เลขประจำตัวประชาชน 13 หลัก</label>
+                <input type="text" inputmode="numeric" maxlength="13" pattern="\d{13}"
+                  class="form-control form-control-lg text-center mb-3" id="cid_login" required
+                  placeholder="X-XXXX-XXXXX-XX-X">
+                <button class="btn btn-brand w-100 btn-lg" type="submit">
+                  <i class="bi bi-arrow-right-circle me-2"></i>ดำเนินการต่อ
+                </button>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+
+        <section id="existing-section" class="d-none">
+      <div class="mx-auto card-soft p-4 p-md-5" style="max-width:800px">
+        <div class="text-center mb-4">
+          <i class="bi bi-patch-check-fill display-4 text-success"></i>
+          <h3 class="mt-2 mb-1">ขอแสดงความยินดี!</h3>
+          <h4 class="mb-3">คุณได้ลงทะเบียนสมัครเรียน สำเร็จแล้ว</h4>
+          <p class="text-danger fw-bold large  px-3">*** การสมัครเรียนจะสมบูรณ์
+            ก็ต่อเมื่อมีการส่งสลิปการชำระค่าธรรมเนียมการเรียนเท่านั้น</p>
+        </div>
+        <dl class="row mb-0 mt-4" id="existing-summary"></dl>
+
+        <div id="existing-payment-box" class="mt-4"></div>
+
+        <div id="existing-pdf-error" class="alert alert-danger py-2 px-3 small mt-4 mb-0 d-none"></div>
+        <div class="d-grid gap-2 mt-4">
+          <a href="#" id="existing-pdf-link" target="_blank" class="btn btn-brand"><i
+              class="bi bi-file-earmark-pdf me-2"></i>ดาวน์โหลดใบสมัคร PDF</a>
+          <button class="btn btn-brand-outline d-none" id="btn-retry-pdf-existing"><i
+              class="bi bi-arrow-repeat me-2"></i>สร้างไฟล์ PDF ใหม่อีกครั้ง</button>
+          <button class="btn btn-brand-outline" id="btn-back-login"><i
+              class="bi bi-arrow-left me-2"></i>ย้อนกลับ</button>
+        </div>
+      </div>
+    </section>
+
+
+        <section id="form-section" class="d-none">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title mb-0">ใบสมัครเข้าศึกษาต่อ</h2>
+        <button class="btn btn-sm btn-brand-outline" id="btn-back-login2"><i
+            class="bi bi-arrow-left me-1"></i>ย้อนกลับ</button>
+      </div>
+
+      <div class="alert alert-info mb-4" style="border: 1px solid var(--sky);">
+        <h5 class="mb-3" style="font-weight: 600;"><i class="bi bi-info-circle-fill me-2"></i>คำแนะนำก่อนกรอกใบสมัคร
+        </h5>
+        <ul class="mb-3" style="line-height: 1.8;">
+          <li>กรุณากรอกข้อมูลให้ครบถ้วน และตรวจสอบความถูกต้องก่อนกดปุ่มบันทึกข้อมูล</li>
+        </ul>
+
+        <h6 style="font-weight: 600;"><i class="bi bi-folder2-open me-2"></i>เอกสารประกอบการสมัครเรียน</h6>
+        <ul class="mb-3" style="line-height: 1.8;">
+          <li>รูปถ่ายขนาด 1 นิ้ว</li>
+          <li>สำเนาบัตรประชาชน</li>
+          <li>สำเนาทะเบียนบ้าน</li>
+        </ul>
+
+        <hr>
+        <p class="mb-2">
+          <i class="bi bi-exclamation-circle me-1"></i>
+          หากไม่เข้าใจ หรือมีข้อสงสัย ให้ติดต่อ : ครูอมรรัตน์ พรหมแก้ว (ครูแจง)
+
+          <i class="bi bi-telephone-fill me-2 text-primary"></i> 086-7427316 ::
+          LINE id: jubjang0406 หรือสอบถามได้ใน
+          <a href="#" target="_blank" class="contact-line-link fw-bold">LINE</a>
+        </p>
+        <p class="mb-0 text-muted" style="font-size: 0.9rem;">
+          <i class="bi bi-exclamation-circle me-1"></i> แจ้งแก้ไขข้อมูล หรือส่งสลิปแจ้งการโอนเงินได้ที่
+          <a href="#" target="_blank" class="contact-line-link fw-bold">LINE</a>
+        </p>
+      </div>
+
+      <form id="form-apply" novalidate>
+        <input type="hidden" id="idcard" name="idcard">
+
+        <fieldset class="form-section">
+          <legend>เลือกระดับและสาขาวิชา</legend>
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">ระดับการศึกษา <span class="text-danger">*</span></label>
+              <div class="info-source-grid">
+                <input type="radio" class="btn-check" name="reg_type" id="type_pvc" value="ปวช." required>
+                <label class="btn btn-info-source" for="type_pvc"><i class="bi bi-mortarboard me-1"></i>ปวช. (เรียน 3
+                  ปี)</label>
+                <input type="radio" class="btn-check" name="reg_type" id="type_pvs" value="ปวส." required>
+                <label class="btn btn-info-source" for="type_pvs"><i class="bi bi-mortarboard-fill me-1"></i>ปวส. (เรียน
+                  2 ปี)</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">สาขาวิชา <span class="text-danger">*</span></label>
+              <select class="form-select" id="branch_select" required disabled>
+                <option value="">— กรุณาเลือกระดับก่อน —</option>
+              </select>
+            </div>
+            <div class="col-12" id="selection_summary_box"></div>
+            <div class="col-12" id="level_promo_box"></div>
+            <div class="col-12" id="branch_price_box"></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>1. ข้อมูลผู้สมัครเรียน</legend>
+          <div class="row g-3">
+            <div class="col-md-2">
+              <label class="form-label">คำนำหน้า <span class="text-danger">*</span></label>
+              <select class="form-select" name="prefix" required>
+                <option value="นาย">นาย</option>
+                <option value="นางสาว">นางสาว</option>
+                <option value="นาง">นาง</option>
+                <option value="เด็กชาย">เด็กชาย</option>
+                <option value="เด็กหญิง">เด็กหญิง</option>
+              </select>
+            </div>
+            <div class="col-md-5"><label class="form-label">ชื่อ <span class="text-danger">*</span></label><input
+                class="form-control" name="name" required></div>
+            <div class="col-md-5"><label class="form-label">นามสกุล <span class="text-danger">*</span></label><input
+                class="form-control" name="lastname" required></div>
+            <div class="col-md-4"><label class="form-label">ชื่อเล่น</label><input class="form-control" name="nickname">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">วันเกิด <span class="text-danger">*</span></label>
+              <div class="row g-2" id="dob_group">
+                <div class="col-4">
+                  <select class="form-select" id="dob_day" aria-label="วัน">
+                    <option value="">วัน</option>
+                  </select>
+                </div>
+                <div class="col-4">
+                  <select class="form-select" id="dob_month" aria-label="เดือน">
+                    <option value="">เดือน</option>
+                    <option value="1">ม.ค.</option>
+                    <option value="2">ก.พ.</option>
+                    <option value="3">มี.ค.</option>
+                    <option value="4">เม.ย.</option>
+                    <option value="5">พ.ค.</option>
+                    <option value="6">มิ.ย.</option>
+                    <option value="7">ก.ค.</option>
+                    <option value="8">ส.ค.</option>
+                    <option value="9">ก.ย.</option>
+                    <option value="10">ต.ค.</option>
+                    <option value="11">พ.ย.</option>
+                    <option value="12">ธ.ค.</option>
+                  </select>
+                </div>
+                <div class="col-4">
+                  <select class="form-select" id="dob_year" aria-label="ปี (พ.ศ.)">
+                    <option value="">ปี (พ.ศ.)</option>
+                  </select>
+                </div>
+              </div>
+              <input type="hidden" name="birthday" id="birthday_hidden">
+            </div>
+            <div class="col-md-4"><label class="form-label">เลขประจำตัวประชาชน</label><input class="form-control"
+                id="idcard_display" disabled></div>
+            <div class="col-md-3"><label class="form-label">เชื้อชาติ <span class="text-danger">*</span></label><input
+                class="form-control" name="race" value="ไทย" required></div>
+            <div class="col-md-3"><label class="form-label">สัญชาติ <span class="text-danger">*</span></label><input
+                class="form-control" name="nationality" value="ไทย" required></div>
+            <div class="col-md-3"><label class="form-label">ศาสนา <span class="text-danger">*</span></label><input
+                class="form-control" name="religion" required></div>
+            <div class="col-md-3"><label class="form-label">น้ำหนัก (กก.) <span
+                  class="text-danger">*</span></label><input type="number" class="form-control" name="weight" required>
+            </div>
+            <div class="col-md-3"><label class="form-label">ส่วนสูง (ซม.) <span
+                  class="text-danger">*</span></label><input type="number" class="form-control" name="height" required>
+            </div>
+            <div class="col-md-6"><label class="form-label">เบอร์โทรศัพท์ <span
+                  class="text-danger">*</span></label><input class="form-control" name="student_phone" maxlength="10"
+                required></div>
+            <div class="col-md-6"><label class="form-label">E-mail <span class="text-danger">*</span></label><input
+                type="email" class="form-control" name="student_email" required></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>2. ประวัติการศึกษา</legend>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">จบการศึกษาในระดับ / กำลังศึกษาระดับ <span
+                  class="text-danger">*</span></label><input class="form-control" name="old_grad" required></div>
+            <div class="col-md-6"><label class="form-label">ปี พ.ศ. ที่จบ <span
+                  class="text-danger">*</span></label><input class="form-control" name="old_grad_year" required></div>
+            <div class="col-md-6"><label class="form-label">สถานศึกษาเดิม <span
+                  class="text-danger">*</span></label><input class="form-control" name="school" required></div>
+            <div class="col-md-6"><label class="form-label">จังหวัด <span class="text-danger">*</span></label><input
+                class="form-control" name="school_province" required></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>3. ที่อยู่ปัจจุบัน</legend>
+          <div class="row g-3">
+            <div class="col-md-3"><label class="form-label">บ้านเลขที่</label><input class="form-control"
+                name="house_no"></div>
+            <div class="col-md-2"><label class="form-label">หมู่ที่</label><input class="form-control"
+                name="village_no"></div>
+            <div class="col-md-4"><label class="form-label">หมู่บ้าน/ชุมชน</label><input class="form-control"
+                name="village"></div>
+            <div class="col-md-3"><label class="form-label">ถนน</label><input class="form-control" name="road"></div>
+            <div class="col-md-3"><label class="form-label">ซอย</label><input class="form-control" name="alley"></div>
+            <div class="col-md-3 thai-addr-field">
+              <label class="form-label">ตำบล/แขวง</label>
+              <input class="form-control" name="district" id="addr_district" autocomplete="off"
+                data-thai-addr="district">
+              <div class="thai-addr-suggest" id="addr_district_suggest"></div>
+            </div>
+            <div class="col-md-3 thai-addr-field">
+              <label class="form-label">อำเภอ/เขต</label>
+              <input class="form-control" name="amphoe" id="addr_amphoe" autocomplete="off" data-thai-addr="amphoe">
+              <div class="thai-addr-suggest" id="addr_amphoe_suggest"></div>
+            </div>
+            <div class="col-md-3 thai-addr-field">
+              <label class="form-label">จังหวัด</label>
+              <input class="form-control" name="province" id="addr_province" autocomplete="off"
+                data-thai-addr="province">
+              <div class="thai-addr-suggest" id="addr_province_suggest"></div>
+            </div>
+            <div class="col-md-3 thai-addr-field">
+              <label class="form-label">รหัสไปรษณีย์</label>
+              <input class="form-control" name="zipcode" id="addr_zipcode" autocomplete="off" data-thai-addr="zipcode">
+              <div class="thai-addr-suggest" id="addr_zipcode_suggest"></div>
+            </div>
+            <div class="col-12">
+              <div class="form-text"><i class="bi bi-info-circle me-1"></i>พิมพ์ตำบล/อำเภอ/จังหวัด/รหัสไปรษณีย์
+                อย่างใดอย่างหนึ่ง แล้วเลือกจากรายการ ระบบจะเติมช่องอื่น ๆ ให้อัตโนมัติ</div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>4. ข้อมูลผู้ปกครอง</legend>
+          <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">ชื่อ-สกุล บิดา <span
+                  class="text-danger father-required-star d-none">*</span></label><input class="form-control"
+                name="father"></div>
+            <div class="col-md-4"><label class="form-label">อาชีพบิดา <span
+                  class="text-danger father-required-star d-none">*</span></label><input class="form-control"
+                name="father_occupation"></div>
+            <div class="col-md-4"><label class="form-label">เบอร์โทรบิดา <span
+                  class="text-danger father-required-star d-none">*</span></label><input class="form-control"
+                name="father_phone" maxlength="10"></div>
+            <div class="col-md-4"><label class="form-label">ชื่อ-สกุล มารดา <span
+                  class="text-danger mother-required-star d-none">*</span></label><input class="form-control"
+                name="mother"></div>
+            <div class="col-md-4"><label class="form-label">อาชีพมารดา <span
+                  class="text-danger mother-required-star d-none">*</span></label><input class="form-control"
+                name="mother_occupation"></div>
+            <div class="col-md-4"><label class="form-label">เบอร์โทรมารดา <span
+                  class="text-danger mother-required-star d-none">*</span></label><input class="form-control"
+                name="mother_phone" maxlength="10"></div>
+
+            <div class="col-12 mt-2">
+              <label class="form-label d-block">ผู้ปกครองที่ติดต่อได้สะดวกที่สุด</label>
+              <div class="btn-group" role="group" id="parent_type_group">
+                <input type="radio" class="btn-check" name="parent_type" id="pt1" value="บิดา">
+                <label class="btn btn-outline-primary btn-sm" for="pt1">บิดา</label>
+                <input type="radio" class="btn-check" name="parent_type" id="pt2" value="มารดา">
+                <label class="btn btn-outline-primary btn-sm" for="pt2">มารดา</label>
+                <input type="radio" class="btn-check" name="parent_type" id="pt3" value="อื่นๆ">
+                <label class="btn btn-outline-primary btn-sm" for="pt3">อื่นๆ</label>
+              </div>
+              <div class="form-text">ไม่บังคับเลือก แต่ถ้าเลือก "บิดา" หรือ "มารดา"
+                ต้องกรอกข้อมูลของบุคคลนั้นด้านบนให้ครบ ถ้าเลือก "อื่นๆ" ต้องกรอกข้อมูลผู้ปกครองด้านล่างนี้ให้ครบแทน
+              </div>
+            </div>
+            <div class="col-md-4"><label class="form-label">ชื่อ-สกุล ผู้ปกครอง <span
+                  class="text-danger parent-required-star d-none">*</span></label><input class="form-control"
+                name="parent"></div>
+            <div class="col-md-3"><label class="form-label">อาชีพ</label><input class="form-control"
+                name="parent_occupation"></div>
+            <div class="col-md-3"><label class="form-label">เบอร์โทร <span
+                  class="text-danger parent-required-star d-none">*</span></label><input class="form-control"
+                name="parent_phone" maxlength="10"></div>
+            <div class="col-md-2"><label class="form-label">เกี่ยวข้องเป็น <span
+                  class="text-danger parent-required-star d-none">*</span></label><input class="form-control"
+                name="parent_relationship"></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>5. ทราบข้อมูลการสมัครเรียนจาก <span class="text-danger">*</span></legend>
+          <div class="info-source-grid">
+            <input type="radio" class="btn-check" name="info_source" id="src_1" value="ครูจากวิทยาลัยที่มาแนะแนว"
+              required>
+            <label class="btn btn-info-source" for="src_1"><i
+                class="bi bi-person-badge me-1"></i>ครูจากวิทยาลัยที่มาแนะแนว</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_2" value="ครูแนะแนวที่โรงเรียนเดิม">
+            <label class="btn btn-info-source" for="src_2"><i
+                class="bi bi-person-video3 me-1"></i>ครูแนะแนวที่โรงเรียนเดิม</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_3" value="เพื่อน">
+            <label class="btn btn-info-source" for="src_3"><i class="bi bi-people me-1"></i>เพื่อน</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_4" value="ผู้ปกครอง">
+            <label class="btn btn-info-source" for="src_4"><i class="bi bi-house-heart me-1"></i>ผู้ปกครอง</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_5" value="ญาติ">
+            <label class="btn btn-info-source" for="src_5"><i class="bi bi-person-hearts me-1"></i>ญาติ</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_6" value="รุ่นพี่">
+            <label class="btn btn-info-source" for="src_6"><i class="bi bi-mortarboard me-1"></i>รุ่นพี่</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_7" value="ค้นหาจาก Google">
+            <label class="btn btn-info-source" for="src_7"><i class="bi bi-google me-1"></i>ค้นหาจาก Google</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_8" value="เว็บไซต์วิทยาลัย">
+            <label class="btn btn-info-source" for="src_8"><i class="bi bi-globe me-1"></i>เว็บไซต์วิทยาลัย</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_9" value="เพจวิทยาลัยใน Facebook">
+            <label class="btn btn-info-source" for="src_9"><i class="bi bi-facebook me-1"></i>เพจวิทยาลัยใน
+              Facebook</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_10" value="เพจสาขาใน Facebook">
+            <label class="btn btn-info-source" for="src_10"><i class="bi bi-facebook me-1"></i>เพจสาขาใน
+              Facebook</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_11" value="LINE">
+            <label class="btn btn-info-source" for="src_11"><i class="bi bi-chat-dots me-1"></i>LINE</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_12" value="Instagram">
+            <label class="btn btn-info-source" for="src_12"><i class="bi bi-instagram me-1"></i>Instagram</label>
+
+            <input type="radio" class="btn-check" name="info_source" id="src_13" value="TikTok">
+            <label class="btn btn-info-source" for="src_13"><i class="bi bi-tiktok me-1"></i>TikTok</label>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>เอกสารแนบ</legend>
+          <p class="form-text mt-0">ไฟล์แต่ละไฟล์ (รองรับเฉพาะไฟล์รูปภาพ) ขนาดไม่เกิน 5 MB</p>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">รูปถ่าย (สำหรับใบสมัคร)</label>
+              <button type="button" class="btn btn-outline-primary w-100 btn-open-crop-modal" data-target="photo"
+                data-title="รูปถ่าย (หน้าตรง)">
+                <i class="bi bi-camera me-1"></i> อัปโหลดรูปถ่าย
+              </button>
+              <input type="hidden" id="file_photo_data">
+              <div id="preview_photo" class="file-preview-box mt-2"></div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">สำเนาบัตรประชาชน</label>
+              <button type="button" class="btn btn-outline-primary w-100 btn-open-crop-modal" data-target="doc1"
+                data-title="สำเนาบัตรประชาชน">
+                <i class="bi bi-person-vcard me-1"></i> อัปโหลดบัตรประชาชน
+              </button>
+              <input type="hidden" id="file_doc1_data">
+              <div id="preview_doc1" class="file-preview-box mt-2"></div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">สำเนาทะเบียนบ้าน</label>
+              <button type="button" class="btn btn-outline-primary w-100 btn-open-crop-modal" data-target="doc2"
+                data-title="สำเนาทะเบียนบ้าน">
+                <i class="bi bi-house me-1"></i> อัปโหลดทะเบียนบ้าน
+              </button>
+              <input type="hidden" id="file_doc2_data">
+              <div id="preview_doc2" class="file-preview-box mt-2"></div>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-brand btn-lg"><i class="bi bi-eye me-2"></i>ตรวจสอบข้อมูลก่อนส่ง</button>
+        </div>
+      </form>
+    </section>
+
+
+        <section id="confirm-section" class="d-none">
+      <div class="mx-auto card-soft p-4 p-md-5" style="max-width:720px">
+        <h3 class="section-title text-center mb-4"><i
+            class="bi bi-clipboard-check me-2"></i>กรุณาตรวจสอบข้อมูลก่อนยืนยันส่งใบสมัคร</h3>
+        <dl class="row" id="confirm-summary"></dl>
+        <div class="d-flex gap-2 mt-4">
+          <button class="btn btn-brand-outline w-50" id="btn-edit"><i class="bi bi-pencil me-2"></i>แก้ไขข้อมูล</button>
+          <button class="btn btn-brand w-50" id="btn-confirm-submit"><i
+              class="bi bi-send-check me-2"></i>ยืนยันส่งใบสมัคร</button>
+        </div>
+      </div>
+    </section>
+
+
+        <section id="success-section" class="d-none">
+      <div class="mx-auto card-soft p-4 p-md-5" style="max-width:800px">
+        <div class="text-center mb-4">
+          <i class="bi bi-patch-check-fill display-4 text-success"></i>
+          <h3 class="mt-2 mb-1">ขอแสดงความยินดี!</h3>
+          <h4 class="mb-3">คุณได้ลงทะเบียนสมัครเรียน สำเร็จแล้ว</h4>
+          <p class="text-danger fw-bold large px-3">*** การสมัครเรียนจะสมบูรณ์
+            ก็ต่อเมื่อมีการส่งสลิปการชำระค่าธรรมเนียมการเรียนเท่านั้น</p>
+        </div>
+        <p class="section-sub text-center">เลขที่ใบสมัคร <strong id="success-docno"></strong></p>
+        <dl class="row mb-0 mt-4" id="success-summary"></dl>
+
+        <div id="success-payment-box" class="mt-4"></div>
+
+        <div id="pdf-status-error" class="alert alert-danger text-start mt-4 mb-0 d-none"></div>
+        <div class="d-grid gap-2 mt-4">
+          <a href="#" id="success-pdf-link" target="_blank" class="btn btn-brand btn-lg"><i
+              class="bi bi-file-earmark-pdf me-2"></i>ดาวน์โหลดใบสมัคร PDF</a>
+          <a href="index.html" class="btn btn-brand-outline">กลับหน้าแรก</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="site-footer"></div>
+
+
+    <div class="modal fade" id="promoImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content bg-transparent border-0 shadow-none">
+        <div class="modal-body p-0 text-center position-relative">
+          <button type="button"
+            class="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-2 bg-dark bg-opacity-50 rounded-circle"
+            data-bs-dismiss="modal" aria-label="ปิด" style="z-index:10;"></button>
+          <img id="promoImageModalImg" src="" alt="โปรโมชั่น" class="img-fluid rounded-4 shadow-lg"
+            style="max-height:85vh; cursor:zoom-out;" data-bs-dismiss="modal">
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    <div class="modal fade" id="appCropModal" tabindex="-1" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-crop me-2"></i>อัปโหลด <span id="appCropModalTitle"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <div class="mb-3">
+            <button class="btn btn-brand-outline shadow-sm me-2"
+              onclick="document.getElementById('appCropGhostInput').click()">
+              <i class="bi bi-folder2-open me-1"></i> เลือกจากแฟ้ม
+            </button>
+            <input type="file" id="appCropGhostInput" accept="image/*" class="d-none">
+            <p class="text-muted small mt-2 mb-0">หรือ "คัดลอกรูป" แล้วกดวาง (Ctrl+V) ที่นี่ได้เลย</p>
+          </div>
+          <div id="appCropContainer" style="display:none; max-height: 50vh;"
+            class="bg-light p-2 border rounded-3 text-center position-relative mt-3">
+            <button type="button"
+              class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 rounded-circle shadow z-3"
+              id="btnCancelCropData" style="width: 32px; height: 32px; padding: 0; line-height: 1;" title="ยกเลิกรูป"><i
+                class="bi bi-x fs-5"></i></button>
+            <img id="appCropPreviewImg" src="" style="max-width: 100%;">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
+          <button type="button" class="btn btn-success" id="btnConfirmCrop"><i class="bi bi-check2-circle me-1"></i>
+            ใช้รูปนี้</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+
+</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js">
+
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+</script>
+
+    <script src="https://cdn.jsdelivr.net/npm/pizzip@3.2.0/dist/pizzip.min.js">
+
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.70.0/build/docxtemplater.min.js">
+
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.2/dist/jszip.min.js">
+
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.4.0/dist/docx-preview.min.js">
+
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js">
+
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js">
+
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js">
+
+</script>
+  <script src="assets/js/footer.js">
+
+</script>
+  <script src="assets/js/config.js">
+
+</script>
+  <script src="assets/js/supabase-client.js">
+
+</script>
+  <script src="assets/js/docx-pdf-generate.js">
+
+</script>
+  <script src="assets/js/thai-address.js">
+
+</script>
+  <script src="assets/js/apply.js">
+
+</script>
+</body>
+
+</html>
