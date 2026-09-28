@@ -1076,7 +1076,8 @@
   });
 
   async function uploadFile(file, pathPrefix) {
-    const ext = (file.name.split('.').pop() || 'dat').toLowerCase();
+    const filename = file.name || 'image.jpg';
+    const ext = (filename.split('.').pop() || 'dat').toLowerCase();
     return uploadBytes(await file.arrayBuffer(), `${pathPrefix}.${ext}`, file.type);
   }
 
