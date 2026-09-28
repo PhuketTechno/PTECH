@@ -1,607 +1,1113 @@
-<!doctype html>
-<html lang="th">
+(function () {
+  const sections = {
+    closed: document.getElementById('closed-section'),
+    login: document.getElementById('login-section'),
+    existing: document.getElementById('existing-section'),
+    form: document.getElementById('form-section'),
+    confirm: document.getElementById('confirm-section'),
+    success: document.getElementById('success-section'),
+  };
+  function showSection(name) {
+    Object.values(sections).forEach(s => s.classList.add('d-none'));
+    sections[name].classList.remove('d-none');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>สมัครเรียนทางออนไลน์</title>
-  <link rel="icon" id="favicon" href="">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600&display=swap"
-    rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
-  <link href="assets/css/style.css" rel="stylesheet">
-</head>
+  let cfg = {};
+  let branchesByLevel = { 'ปวช.': [], 'ปวส.': [] };
+  let promosByLevel = {};
+  let selectedBranch = null;
+  let files = { photo: null, doc1: null, doc2: null };
+  let pendingPayload = null;
+  let socialLinks = [];
 
-<body>
+  init();
+  setupBirthdayFields();
 
-  <nav class="navbar site-nav py-3">
-    <div class="container d-flex justify-content-between align-items-center">
-      <a class="navbar-brand d-flex align-items-center gap-2 m-0" href="index.html">
-        <img id="nav-logo" class="nav-logo nav-logo-slide-in d-none" alt="Logo" style="height: 45px;">
-        <div class="d-none d-sm-block text-primary lh-sm">
-          <span id="nav-school-name" class="fw-bolder fs-5 d-block">วิทยาลัยฯ</span>
-          <span id="nav-school-name-en" class="fs-6 d-block opacity-75 d-none">TECHNOLOGY COLLEGE</span>
+  function checkCtzID(id) {
+    if (!/^\d{13}$/.test(id)) return false;
+    let sum = 0;
+    for (let i = 0; i < 12; i++) sum += parseFloat(id.charAt(i)) * (13 - i);
+    return (11 - (sum % 11)) % 10 === parseFloat(id.charAt(12));
+  }
+
+  function setupBirthdayFields() {
+    const daySel = document.getElementById('dob_day');
+    const monthSel = document.getElementById('dob_month');
+    const yearSel = document.getElementById('dob_year');
+    const hidden = document.getElementById('birthday_hidden');
+    if (!daySel || !monthSel || !yearSel || !hidden) return;
+
+    const nowBE = new Date().getFullYear() + 543;
+
+    let yearOptions = '<option value="">ปี (พ.ศ.)</option>';
+    for (let y = nowBE - 10; y >= nowBE - 90; y--) yearOptions += `<option value="${y}">${y}</option>`;
+    yearSel.innerHTML = yearOptions;
+
+    function isLeapYear(gregorianYear) {
+      return (gregorianYear % 4 === 0 && gregorianYear % 100 !== 0) || (gregorianYear % 400 === 0);
+    }
+    function daysInMonth(gregorianYear, month) {
+      const days = [31, isLeapYear(gregorianYear) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      return days[month - 1];
+    }
+
+    function refreshDayOptions() {
+      const month = Number(monthSel.value);
+      const yearBE = Number(yearSel.value);
+      const gregorianYear = yearBE ? yearBE - 543 : new Date().getFullYear();
+      const maxDay = month ? daysInMonth(gregorianYear, month) : 31;
+      const prevValue = daySel.value;
+      let opts = '<option value="">วัน</option>';
+      for (let d = 1; d <= maxDay; d++) opts += `<option value="${d}">${d}</option>`;
+      daySel.innerHTML = opts;
+      if (prevValue && Number(prevValue) <= maxDay) daySel.value = prevValue;
+    }
+
+    function updateHidden() {
+      const d = daySel.value, m = monthSel.value, yBE = yearSel.value;
+      const dobGroup = document.getElementById('dob_group');
+      if (d && m && yBE) {
+        const gregorianYear = Number(yBE) - 543;
+        hidden.value = `${gregorianYear}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        if (dobGroup) dobGroup.classList.remove('is-invalid-group');
+      } else {
+        hidden.value = '';
+      }
+    }
+
+    refreshDayOptions();
+    monthSel.addEventListener('change', () => { refreshDayOptions(); updateHidden(); });
+    yearSel.addEventListener('change', () => { refreshDayOptions(); updateHidden(); });
+    daySel.addEventListener('change', updateHidden);
+  }
+
+  function toDriveImgSrc(urlOrId) {
+    if (!urlOrId) return '';
+    if (urlOrId.startsWith('http')) return urlOrId;
+    return `https://lh3.googleusercontent.com/d/${urlOrId}`;
+  }
+
+  async function init() {
+    showLoader('กำลังตรวจสอบสถานะระบบ...');
+    const promoContainer = document.getElementById('promo_container');
+    if (promoContainer) promoContainer.classList.add('d-none');
+
+    const [fetchedCfg, fetchedSocialLinks] = await Promise.all([
+      fetchConfig(),
+      fetchSocialLinks()
+    ]);
+    cfg = fetchedCfg;
+    socialLinks = fetchedSocialLinks || [];
+
+    if (document.getElementById('nav-school-name')) document.getElementById('nav-school-name').textContent = cfg.school_name || '';
+
+    const navSchoolEn = document.getElementById('nav-school-name-en');
+    if (navSchoolEn) {
+      if (cfg.school_name_en) {
+        navSchoolEn.textContent = cfg.school_name_en;
+        navSchoolEn.classList.remove('d-none');
+      } else {
+        navSchoolEn.classList.add('d-none');
+      }
+    }
+
+    const logoEl = document.getElementById('nav-logo');
+    const footerLogo = document.getElementById('footer-logo');
+
+    if (logoEl || footerLogo) {
+      if (cfg.logo_url) {
+        if (logoEl) {
+          logoEl.src = toDriveImgSrc(cfg.logo_url);
+          logoEl.classList.remove('d-none');
+        }
+        if (footerLogo) {
+          footerLogo.src = toDriveImgSrc(cfg.logo_url);
+          footerLogo.classList.remove('d-none');
+        }
+      } else {
+
+        const defaultLogo = toDriveImgSrc('1hQmJz3B281BiRsrDluYP7HVpabqNPhqF');
+        if (logoEl) {
+          logoEl.src = defaultLogo;
+          logoEl.classList.remove('d-none');
+        }
+        if (footerLogo) {
+          footerLogo.src = defaultLogo;
+          footerLogo.classList.remove('d-none');
+        }
+      }
+    }
+
+    const fs = document.getElementById('footer-school-name');
+    if (fs) fs.textContent = cfg.school_name || '';
+
+    const footSchoolEn = document.getElementById('footer-school-name-en');
+    if (footSchoolEn) {
+      if (cfg.school_name_en) {
+        footSchoolEn.textContent = cfg.school_name_en;
+        footSchoolEn.classList.remove('d-none');
+      } else {
+        footSchoolEn.classList.add('d-none');
+      }
+    }
+
+    const footSlogan = document.getElementById('footer-slogan');
+    if (footSlogan) {
+      if (cfg.slogan) {
+        footSlogan.textContent = cfg.slogan;
+        footSlogan.classList.remove('d-none');
+      } else {
+        footSlogan.classList.add('d-none');
+      }
+    }
+
+    if (document.getElementById('footer-address')) document.getElementById('footer-address').textContent = cfg.school_address || '';
+    if (document.getElementById('footer-phone')) document.getElementById('footer-phone').textContent = cfg.school_phone ? `โทร. ${cfg.school_phone}` : '';
+    if (document.getElementById('footer-yr')) document.getElementById('footer-yr').textContent = new Date().getFullYear() + 543;
+
+    if (cfg.favicon_url) {
+      const fav = document.getElementById('favicon');
+      if (fav) fav.href = toDriveImgSrc(cfg.favicon_url);
+    }
+
+    function extractYouTubeId(urlOrId) {
+      if (!urlOrId) return '';
+      if (urlOrId.length === 11 && !urlOrId.includes('/')) return urlOrId;
+      const match = urlOrId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^"&?\/\s]{11})/);
+      return match ? match[1] : urlOrId;
+    }
+
+
+    const videoCol = document.getElementById('apply-video-col');
+    if (videoCol) {
+      const parsedYoutubeId = extractYouTubeId(cfg.youtube_id);
+      if (parsedYoutubeId) {
+        document.getElementById('apply-video-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${encodeURIComponent(parsedYoutubeId)}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-100 h-100" style="border-radius: var(--radius-sm);"></iframe>`;
+      } else {
+
+        videoCol.classList.replace('d-lg-block', 'd-none');
+        const descCol = videoCol.previousElementSibling;
+        if (descCol) {
+          descCol.classList.replace('col-lg-6', 'col-lg-12');
+        }
+      }
+    }
+
+
+    if (cfg.line_link) {
+      document.querySelectorAll('.contact-line-link').forEach(el => {
+        el.href = cfg.line_link;
+        if (cfg.line_desc) el.textContent = cfg.line_desc;
+      });
+    }
+
+    const [pvc, pvs] = await Promise.all([fetchBranches('ปวช.'), fetchBranches('ปวส.')]);
+    branchesByLevel['ปวช.'] = pvc;
+    branchesByLevel['ปวส.'] = pvs;
+
+    const promos = await fetchPromotions();
+    promos.forEach(p => {
+      if (!promosByLevel[p.level]) promosByLevel[p.level] = [];
+      promosByLevel[p.level].push(p);
+    });
+
+    const links = await fetchSocialLinks();
+    const linkHost = document.getElementById('footer-links');
+    if (linkHost) {
+      linkHost.innerHTML = links.map(l => `
+        <a href="${l.url}" target="_blank" rel="noopener" class="btn btn-outline-light rounded-pill btn-sm me-2 mb-2">
+          <i class="bi ${l.icon || 'bi-link-45deg'} me-1"></i>${l.label}
+        </a>`).join('');
+    }
+    hideLoader();
+
+    const qsId = new URLSearchParams(window.location.search).get('id');
+    if (qsId) {
+      showLoader('กำลังโหลดข้อมูล...');
+      const { data: qsApp, error: qsError } = await sb.from('applications').select('*').eq('id', qsId).single();
+      hideLoader();
+      if (!qsError && qsApp) {
+        document.getElementById('success-docno').textContent = qsApp.doc_no || '-';
+        const pdfLink = document.getElementById('success-pdf-link');
+        if (qsApp.pdf_url) {
+          pdfLink.href = toViewDriveUrl(qsApp.pdf_url);
+          pdfLink.classList.remove('d-none');
+        } else {
+          pdfLink.classList.add('d-none');
+        }
+        document.getElementById('success-summary').innerHTML = [
+          summaryRow('สมัครเรียน', `${qsApp.level} ${qsApp.branch}`),
+          summaryRow('ชื่อ-นามสกุล', `${qsApp.prefix}${qsApp.name} ${qsApp.lastname}`),
+          summaryRow('สถานะ', statusLabel(qsApp.status)),
+        ].join('');
+        const pdfStatusError = document.getElementById('pdf-status-error');
+        if (pdfStatusError) pdfStatusError.classList.add('d-none');
+
+        renderPaymentBox(qsApp, 'success-payment-box');
+
+        showSection('success');
+        return;
+      } else {
+        showToast('ไม่พบข้อมูลใบสมัครจากลิงก์ดังกล่าว', 'danger');
+      }
+    }
+
+    if (String(cfg.form_closed).toUpperCase() === 'TRUE') {
+      showSection('closed');
+      return;
+    }
+    showSection('login');
+  }
+
+  document.getElementById('cid_login').addEventListener('input', function () {
+    this.classList.remove('is-invalid');
+  });
+
+  document.getElementById('form-login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const cidInput = document.getElementById('cid_login');
+    const cid = cidInput.value.trim();
+    if (!checkCtzID(cid)) {
+      cidInput.classList.add('is-invalid');
+      showToast('เลขประจำตัวประชาชนไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง', 'danger');
+      return;
+    }
+
+    showLoader('กำลังตรวจสอบข้อมูล...');
+    const { data, error } = await sb.rpc('find_application_by_idcard', { p_idcard: cid });
+    hideLoader();
+    if (error) { showToast('เกิดข้อผิดพลาด: ' + error.message, 'danger'); return; }
+
+    if (data && data.length > 0) {
+      renderExisting(data[0]);
+      showSection('existing');
+    } else {
+      document.getElementById('idcard').value = cid;
+      document.getElementById('idcard_display').value = cid;
+      showSection('form');
+    }
+  });
+
+  document.getElementById('btn-back-login').addEventListener('click', () => showSection('login'));
+  document.getElementById('btn-back-login2').addEventListener('click', () => showSection('login'));
+
+  function renderExisting(app) {
+    const dl = document.getElementById('existing-summary');
+    dl.innerHTML = summaryRow('เลขที่ใบสมัคร', app.doc_no) +
+      summaryRow('ระดับ/สาขา', `${app.level} ${app.branch}`) +
+      summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`) +
+      summaryRow('เบอร์โทร', app.student_phone) +
+      summaryRow('สถานะ', statusLabel(app.status));
+
+    const link = document.getElementById('existing-pdf-link');
+    const retryBtn = document.getElementById('btn-retry-pdf-existing');
+    const errorBox = document.getElementById('existing-pdf-error');
+    errorBox.classList.add('d-none');
+
+    if (app.pdf_url) {
+      link.href = toViewDriveUrl(app.pdf_url);
+      link.classList.remove('d-none');
+      retryBtn.classList.add('d-none');
+    } else {
+      link.classList.add('d-none');
+      retryBtn.classList.remove('d-none');
+      retryBtn.onclick = () => regeneratePdf(app, retryBtn, link, errorBox);
+    }
+
+    renderPaymentBox(app, 'existing-payment-box');
+  }
+
+  function statusLabel(s) {
+    const text = { pending: 'รอตรวจสอบ', approved: 'อนุมัติแล้ว', rejected: 'ไม่อนุมัติ' }[s] || s;
+    let badgeClass = 'bg-secondary';
+    if (s === 'pending') badgeClass = 'bg-warning text-dark';
+    else if (s === 'approved') badgeClass = 'bg-success';
+    else if (s === 'rejected') badgeClass = 'bg-danger';
+    return `<span class="badge ${badgeClass} fs-6 px-3 py-2 shadow-sm">${text}</span>`;
+  }
+  function summaryRow(label, value) {
+    return `<dt class="col-5 text-muted">${label}</dt><dd class="col-7">${value ?? '-'}</dd>`;
+  }
+
+  function renderPaymentBox(app, targetId) {
+    const box = document.getElementById(targetId);
+    if (!box) return;
+
+
+    const section = box.closest('section');
+    if (section) {
+      const warningText = section.querySelector('.text-danger.fw-bold.large');
+      if (warningText) {
+        if (app.status === 'approved') warningText.classList.add('d-none');
+        else warningText.classList.remove('d-none');
+      }
+    }
+
+    let branchStr = app.branch || '';
+    const group = branchesByLevel[app.level] || [];
+
+    const branchInfo = group.find(b => branchStr.includes(b.name) || branchDisplayName(b) === branchStr);
+
+    const priceText = branchInfo && branchInfo.price ? formatBaht(branchInfo.price) : 'รอตรวจสอบอัตราค่าธรรมเนียม';
+
+
+    const promos = (promosByLevel[app.level] || []).filter(p => p.enabled && p.description);
+    const promoListHtml = promos.length > 0
+      ? `<div class="mt-4 mb-3">
+           <h6 class="text-brand fw-bold mb-3"><i class="bi bi-tags-fill me-2"></i>ส่วนลดและโปรโมชั่นพิเศษ!</h6>
+           ${promos.map(p => {
+        let desc = (p.description || '').replace(/\\n|\n/g, '<br>');
+        desc = desc.replace(/\s+-\s+(?=[a-zA-Zก-๙])/g, '<br><span class="text-danger ms-2 me-1">-</span>');
+        return `
+             <div class="card border-0 shadow-sm mb-3" style="background:#fff4f4; border: 1px solid #ffcccc !important;">
+               <div class="row g-0 align-items-center">
+                 ${p.image_url ? `<div class="col-4 col-sm-3 p-2"><img src="${toDriveImgSrc(p.image_url)}" class="img-fluid rounded shadow-sm object-fit-cover promo-payment-zoomable" alt="Promo" role="button" title="คลิกเพื่อดูรูปขนาดเต็ม" style="cursor:zoom-in; transition:transform .2s;"></div>` : ''}
+                 <div class="${p.image_url ? 'col-8 col-sm-9' : 'col-12'}">
+                   <div class="card-body py-3 px-3">
+                     <h6 class="card-title fw-bold text-danger mb-2">${p.title || 'โปรโมชั่น'}</h6>
+                     <p class="card-text mb-0 small text-dark fw-medium" style="line-height:1.6">${desc}</p>
+                   </div>
+                 </div>
+               </div>
+             </div>
+             `;
+      }).join('')}
+         </div>`
+      : '';
+
+    const bankImgSrc = cfg.bank_account_image ? toDriveImgSrc(cfg.bank_account_image) : null;
+    const bankHtml = bankImgSrc
+      ? `<img src="${bankImgSrc}" alt="Bank Card" class="img-fluid rounded-3 shadow-sm border bank-card-zoomable" onerror="this.style.display='none'" style="max-height:80px; object-fit:contain; background:#fff; cursor:zoom-in;">`
+      : '<i class="bi bi-credit-card-2-front display-4 text-muted"></i>';
+
+    const hasGlobalDiscount = (app.level === 'ปวช.' && String(cfg.pvc_discount_active).toUpperCase() === 'TRUE') ||
+      (app.level === 'ปวส.' && String(cfg.pvs_discount_active).toUpperCase() === 'TRUE');
+
+    let priceDisplayHtml = `<strong class="fs-5 text-dark">${priceText}</strong>`;
+    if (hasGlobalDiscount && branchInfo && branchInfo.price) {
+      priceDisplayHtml = `
+        <div class="text-end d-flex flex-column align-items-end">
+          <span class="fs-5 text-danger text-decoration-line-through mb-1">${priceText}</span>
+          <span class="badge bg-success rounded-pill px-3 py-2 fs-6 shadow-sm" style="background-color: #ff3366 !important;"><i class="bi bi-tags-fill me-1"></i>ได้รับส่วนลด</span>
         </div>
-      </a>
-      <a href="index.html" class="btn btn-brand-outline rounded-pill px-3 d-flex align-items-center">
-        <i class="bi bi-house-door-fill me-2"></i>กลับหน้าแรก
-      </a>
-    </div>
-  </nav>
+      `;
+    }
 
-  <main class="container py-5">
+    let paymentHtml = '';
+    if (app.status !== 'approved') {
+      paymentHtml = `
+      <div class="card bg-light border-0 rounded-4 p-3 p-md-4">
+        <h5 class="fw-bold mb-3 text-center"><i class="bi bi-wallet2 me-2"></i>สรุปค่าใช้จ่ายและการชำระเงิน</h5>
+        
+        <div class="d-flex justify-content-between align-items-center mb-1 border-bottom pb-3">
+          <span class="text-muted">ค่าใช้จ่ายรวม (บาท):</span>
+          ${priceDisplayHtml}
+        </div>
+        
+        ${promoListHtml}
 
-
-        <section id="closed-section" class="d-none text-center py-5">
-      <i class="bi bi-lock display-1 text-brand"></i>
-      <h2 class="mt-3">ขณะนี้ปิดรับสมัครเรียนชั่วคราว</h2>
-      <p class="section-sub">กรุณาติดตามข่าวสารการเปิดรับสมัครรอบถัดไป</p>
-      <a href="index.html" class="btn btn-brand-outline mt-2">กลับหน้าแรก</a>
-    </section>
-
-
-        <section id="login-section">
-      <div class="mx-auto" style="max-width:960px">
-        <div class="row g-4 align-items-stretch">
-
-
-                    <div class="col-lg-6">
-            <div class="card-soft p-4 p-md-5 h-100"
-              style="background:linear-gradient(135deg,var(--navy) 0%,var(--navy-deep) 100%);color:#fff;border:none;">
-              <h4 class="mb-3" style="font-weight:700;"><i class="bi bi-info-circle-fill me-2"></i>คำแนะนำก่อนสมัคร</h4>
-              <p class="mb-3" style="opacity:.92;line-height:1.8;">
-                สำหรับนักเรียนที่ <strong>ยังไม่เคยสมัครเรียน</strong><br>
-                ให้ใส่ <strong>เลขประจำตัวประชาชนของนักเรียน</strong> ไปก่อนได้เลย ระบบจะพาไปกรอกใบสมัครใหม่โดยอัตโนมัติ
+        <div class="alert alert-warning mt-4 mb-4 border-warning border-opacity-50" style="background:#FFFDF8">
+          <h6 class="fw-bold text-dark"><i class="bi bi-bank me-2"></i>ช่องทางการโอนเงินชำระค่าธรรมเนียม</h6>
+          <div class="d-flex flex-column flex-sm-row align-items-center gap-3 mt-3">
+            ${bankHtml}
+            <div>
+              <p class="mb-1"><strong>ธนาคาร:</strong> ${cfg.bank_name || '-'}</p>
+              <p class="mb-1"><strong>เลขที่บัญชี:</strong> <span class="fs-5 text-primary fw-bold">${cfg.bank_account_no || '-'}</span></p>
+              <p class="mb-0"><strong>ชื่อบัญชี:</strong> ${cfg.bank_account_name || '-'}</p>
+            </div>
+          </div>
+        </div>
+        
+        ${(() => {
+          const lineLinkObj = socialLinks.find(l => (l.icon || '').toLowerCase().includes('line') || (l.label || '').toLowerCase().includes('line') || (l.url || '').toLowerCase().includes('line.me'));
+          const lineUrl = lineLinkObj ? lineLinkObj.url : '#';
+          const lineLabel = lineLinkObj ? lineLinkObj.label : '';
+          return `
+            <div class="text-center rounded-3 p-3 bg-white border">
+            <p class="mb-2"><strong><i class="bi bi-clipboard-check-fill text-success"></i> สอบถามจำนวนเงิน ก่อนการโอนชำระ </strong></p>
+              <p class="mb-2"><strong><i class="bi bi-clipboard-check-fill text-success"></i> ส่งสลิปแจ้งการโอนเงินได้ที่</strong></p>
+              <a href="${lineUrl}" target="_blank" class="d-inline-block transition-hover">
+                <img src="https://scdn.line-apps.com/n/line_add_friends/btn/th.png" alt="เพิ่มเพื่อน LINE" height="36" class="shadow-sm rounded">
+                &nbsp; ${lineLabel}
+              </a>
+              <p class="text-center text-muted small mt-3 mb-0 text-start" style="line-height:1.6">
+                * โดยให้แจ้ง <strong>ชื่อ-นามสกุล หมายเลขโทรศัพท์</strong> รวมทั้ง <strong>ระดับ และสาขา</strong> ที่ได้สมัครเรียน
               </p>
-              <hr style="border-color:rgba(255,255,255,.3);">
-              <h5 class="mb-3" style="font-weight:600;"><i class="bi bi-folder2-open me-2"></i>เอกสารประกอบการสมัครเรียน
-              </h5>
-              <ul class="list-unstyled mb-0" style="opacity:.92;line-height:2;">
-                <li><i class="bi bi-check-circle-fill me-2" style="color:#8fffb0;"></i>รูปถ่ายขนาด 1 นิ้ว</li>
-                <li><i class="bi bi-check-circle-fill me-2" style="color:#8fffb0;"></i>สำเนาบัตรประชาชน</li>
-                <li><i class="bi bi-check-circle-fill me-2" style="color:#8fffb0;"></i>สำเนาทะเบียนบ้าน</li>
-              </ul>
             </div>
-          </div>
+          `;
+        })()}
+      </div>`;
+    } else {
+      const slips = (app.payment_slip_url || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (slips.length > 0) {
+        const slipsHtml = slips.map(slipId =>
+          `<div class="col-6 col-md-4 mb-3">
+                    <img src="${toDriveImgSrc(slipId)}" class="img-fluid rounded shadow-sm border slip-zoomable" style="cursor:zoom-in; object-fit: cover; height: 150px; width: 100%;" alt="Payment Slip">
+                 </div>`
+        ).join('');
+        paymentHtml = `
+            <div class="card bg-success bg-opacity-10 border-success border-opacity-25 rounded-4 p-3 p-md-4 mb-4">
+              <h5 class="fw-bold mb-3 text-center text-success"><i class="bi bi-check-circle-fill me-2"></i>ชำระเงินเรียบร้อยแล้ว</h5>
+              <div class="row justify-content-center mt-3">
+                  ${slipsHtml}
+              </div>
+            </div>`;
+      }
+    }
 
+    box.innerHTML = `
+      ${paymentHtml}
 
-                    <div class="col-lg-6" id="apply-video-col">
-            <div class="card-soft h-100 p-2" style="background:#000;">
-              <div class="ratio ratio-16x9 h-100" id="apply-video-container"
-                style="border-radius: var(--radius-sm); overflow: hidden;">
-
-                                <div class="d-flex align-items-center justify-content-center text-white-50">
-                  <i class="bi bi-play-btn" style="font-size: 3rem;"></i>
+      ${(() => {
+        const fbLinkObj = socialLinks.find(l => (l.icon || '').toLowerCase().includes('facebook') || (l.label || '').toLowerCase().includes('facebook') || (l.url || '').toLowerCase().includes('facebook.com'));
+        const fbUrl = fbLinkObj ? fbLinkObj.url : '#';
+        const fbLabel = fbLinkObj ? (fbLinkObj.label || 'เพจวิทยาลัย') : 'แฟนเพจวิทยาลัย';
+        return `
+          <div class="card mt-4 border-0 rounded-4 overflow-hidden shadow-sm position-relative" style="background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);">
+            <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'><g fill=\\'none\\' fill-rule=\\'evenodd\\'><g fill=\\'%230866ff\\' fill-opacity=\\'0.04\\'><path d=\\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\\'/></g></g></svg>'); opacity: 0.8;"></div>
+            <div class="card-body p-4 position-relative z-1" style="background-color: #0d6efd1f;">
+              <div class="d-flex flex-column align-items-center justify-content-center text-center gap-2">
+                <div class="d-flex justify-content-center align-items-center rounded-circle flex-shrink-0" style="width: 56px; height: 56px; background: rgba(8, 102, 255, 0.1); color: #0866FF;">
+                  <i class="bi bi-calendar2-check-fill fs-3"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-1" style="color: #0b3d91;">ประกาศกำหนดการรายงานตัว</h6>
+                  <p class="text-center mb-0 text-dark small" style="line-height: 1.6;">
+                    กำหนดการ <strong>วันรายงานตัว</strong> และ <strong>วันเปิดเรียน</strong> จะแจ้งให้ทราบทางเพจวิทยาลัย<br>
+                    ติดตามข่าวสารได้ที่ <a href="${fbUrl}" target="_blank" class="btn btn-sm btn-primary rounded-pill  px-2 fw-medium shadow-sm transition-hover">
+                      <i class="bi bi-facebook me-1"></i>  ${fbLabel}
+                    </a>
+                  </p>
                 </div>
               </div>
             </div>
           </div>
+        `;
+      })()}
+    `;
 
 
-                    <div class="col-12 mt-lg-0">
-            <div class="card-soft p-4 p-md-5 d-flex flex-column justify-content-center">
-              <h2 class="section-title text-center mb-1">เริ่มต้นสมัครเรียน</h2>
-              <p class="section-sub text-center mb-4">กรอกเลขประจำตัวประชาชนเพื่อตรวจสอบสถานะ<br>หากยังไม่เคยสมัคร
-                ระบบจะพาไปกรอกใบสมัครใหม่</p>
-              <form id="form-login" class="mx-auto w-100" style="max-width: 480px;">
-                <label class="form-label text-center d-block">เลขประจำตัวประชาชน 13 หลัก</label>
-                <input type="text" inputmode="numeric" maxlength="13" pattern="\d{13}"
-                  class="form-control form-control-lg text-center mb-3" id="cid_login" required
-                  placeholder="X-XXXX-XXXXX-XX-X">
-                <button class="btn btn-brand w-100 btn-lg" type="submit">
-                  <i class="bi bi-arrow-right-circle me-2"></i>ดำเนินการต่อ
-                </button>
-              </form>
-            </div>
-          </div>
+    const bankImgEl = box.querySelector('.bank-card-zoomable');
+    if (bankImgEl) {
+      bankImgEl.addEventListener('click', () => {
+        const modalImg = document.getElementById('promoImageModalImg');
+        if (modalImg) {
+          modalImg.src = bankImgEl.src;
+          new bootstrap.Modal(document.getElementById('promoImageModal')).show();
+        }
+      });
+    }
 
+
+    box.querySelectorAll('.slip-zoomable').forEach(img => {
+      img.addEventListener('click', () => {
+        const modalImg = document.getElementById('promoImageModalImg');
+        if (modalImg) {
+          modalImg.src = img.src;
+          new bootstrap.Modal(document.getElementById('promoImageModal')).show();
+        }
+      });
+    });
+
+
+    box.querySelectorAll('.promo-payment-zoomable').forEach(img => {
+      img.addEventListener('click', () => {
+        const modalImg = document.getElementById('promoImageModalImg');
+        if (modalImg) {
+          modalImg.src = img.src;
+          new bootstrap.Modal(document.getElementById('promoImageModal')).show();
+        }
+      });
+    });
+  }
+
+
+
+
+
+
+  async function regeneratePdf(app, btn, link, errorBox) {
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>กำลังสร้าง PDF...`;
+    errorBox.classList.add('d-none');
+    try {
+      const [photoBlob, doc1Blob, doc2Blob] = await Promise.all([
+        fetchAsBlobSafe(app.file1),
+        fetchAsBlobSafe(app.file2),
+        fetchAsBlobSafe(app.file3),
+      ]);
+      const pdfUrl = await buildAndUploadPdf(app, photoBlob, doc1Blob, doc2Blob);
+      link.href = toViewDriveUrl(pdfUrl);
+      link.classList.remove('d-none');
+      btn.classList.add('d-none');
+      showToast('สร้างไฟล์ PDF สำเร็จ', 'success');
+    } catch (err) {
+      console.error(err);
+      errorBox.textContent = 'สร้าง PDF ไม่สำเร็จ: ' + (err.message || err);
+      errorBox.classList.remove('d-none');
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
+
+
+  function toViewDriveUrl(fileId) {
+    if (!fileId) return '';
+    return `https://drive.google.com/file/d/${fileId}/view`;
+  }
+
+  async function fetchAsBlobSafe(fileId) {
+    if (!fileId) return null;
+    try {
+      const { data, error } = await sb.functions.invoke('fetch-file', {
+        body: { fileId },
+      });
+      if (!error && data && data.base64) {
+        const binaryStr = atob(data.base64);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        return new Blob([bytes], { type: data.mimeType || 'application/octet-stream' });
+      }
+      if (data && data.error) console.warn('fetchAsBlobSafe: Edge Function returned logic error →', data.error);
+    } catch (e) {
+      console.warn('fetchAsBlobSafe ล้มเหลว →', e.message);
+    }
+    return null;
+  }
+
+  async function buildAndUploadPdf(app, photo, doc1, doc2) {
+    const pdfBytes = await generateApplicationPdfFromDocx(app, cfg.year, photo || null, doc1 || null, doc2 || null);
+    const levelPrefix = app.level === 'ปวช.' ? 'pvc' : (app.level === 'ปวส.' ? 'pvs' : '');
+    const safeDocNo = String(app.doc_no || '').replace(/[^0-9_-]/g, '');
+    const pdfUrl = await uploadBytes(pdfBytes, `${app.idcard}/application-${levelPrefix}${safeDocNo}.pdf`, 'application/pdf');
+    const { error } = await sb.rpc('attach_pdf_url', { p_idcard: app.idcard, p_pdf_url: pdfUrl });
+    if (error) throw error;
+    return pdfUrl;
+  }
+
+  document.querySelectorAll('input[name="reg_type"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const level = r.value;
+      const sel = document.getElementById('branch_select');
+      sel.disabled = false;
+      sel.innerHTML = `<option value="">— เลือกสาขาวิชา —</option>` +
+        branchesByLevel[level].map(b => `<option value="${b.id}">${branchDisplayName(b)}</option>`).join('');
+      selectedBranch = null;
+      document.getElementById('branch_price_box').innerHTML = '';
+      updateSelectionSummary(level, null);
+      renderLevelPromo(level);
+    });
+  });
+
+  function renderLevelPromo(level) {
+    const box = document.getElementById('level_promo_box');
+    const list = (promosByLevel[level] || []).filter(p => p.enabled && p.description);
+    box.innerHTML = list.map(p => {
+      let desc = (p.description || '').replace(/\\n|\n/g, '<br>');
+      desc = desc.replace(/\s+-\s+(?=[a-zA-Zก-๙])/g, '<br><span class="text-danger ms-2 me-1">-</span>');
+      return `
+      <div class="promo-banner mb-2">
+        <span class="promo-badge">โปรโมชั่น ${level}</span>
+        ${p.title ? `<h6 class="mt-2 mb-1">${p.title}</h6>` : ''}
+        <div class="row g-2 align-items-center">
+          ${p.image_url ? `<div class="col-3"><img src="${toDriveImgSrc(p.image_url)}" class="img-fluid rounded-3 promo-img-zoomable" alt="promo" role="button" title="คลิกเพื่อดูรูปขนาดเต็ม" style="cursor:zoom-in; transition:transform .2s;"></div>` : ''}
+          <div class="${p.image_url ? 'col-9' : 'col-12'}"><p class="mb-0" style="white-space:pre-line">${desc}</p></div>
         </div>
-      </div>
-    </section>
+      </div>`;
+    }).join('');
 
 
-        <section id="existing-section" class="d-none">
-      <div class="mx-auto card-soft p-4 p-md-5" style="max-width:800px">
-        <div class="text-center mb-4">
-          <i class="bi bi-patch-check-fill display-4 text-success"></i>
-          <h3 class="mt-2 mb-1">ขอแสดงความยินดี!</h3>
-          <h4 class="mb-3">คุณได้ลงทะเบียนสมัครเรียน สำเร็จแล้ว</h4>
-          <p class="text-danger fw-bold large  px-3">*** การสมัครเรียนจะสมบูรณ์
-            ก็ต่อเมื่อมีการส่งสลิปการชำระค่าธรรมเนียมการเรียนเท่านั้น</p>
+    box.querySelectorAll('.promo-img-zoomable').forEach(img => {
+      img.addEventListener('click', () => {
+        document.getElementById('promoImageModalImg').src = img.src;
+        new bootstrap.Modal(document.getElementById('promoImageModal')).show();
+      });
+    });
+  }
+
+  document.getElementById('branch_select').addEventListener('change', (e) => {
+    const level = document.querySelector('input[name="reg_type"]:checked')?.value;
+    const list = branchesByLevel[level] || [];
+    selectedBranch = list.find(b => b.id === e.target.value) || null;
+
+
+
+
+    updateSelectionSummary(level, selectedBranch);
+  });
+
+
+  function updateSelectionSummary(level, branch) {
+    const box = document.getElementById('selection_summary_box');
+    if (!level) {
+      box.innerHTML = '';
+      return;
+    }
+    const levelText = level || '...';
+    const branchText = branch ? branchDisplayName(branch) : '<span class="opacity-75">ยังไม่ได้เลือก</span>';
+    box.innerHTML = `
+      <div class="selection-summary-block">
+        <div class="selection-summary-icon">
+          <i class="bi bi-mortarboard-fill"></i>
         </div>
-        <dl class="row mb-0 mt-4" id="existing-summary"></dl>
-
-        <div id="existing-payment-box" class="mt-4"></div>
-
-        <div id="existing-pdf-error" class="alert alert-danger py-2 px-3 small mt-4 mb-0 d-none"></div>
-        <div class="d-grid gap-2 mt-4">
-          <a href="#" id="existing-pdf-link" target="_blank" class="btn btn-brand"><i
-              class="bi bi-file-earmark-pdf me-2"></i>ดาวน์โหลดใบสมัคร PDF</a>
-          <button class="btn btn-brand-outline d-none" id="btn-retry-pdf-existing"><i
-              class="bi bi-arrow-repeat me-2"></i>สร้างไฟล์ PDF ใหม่อีกครั้ง</button>
-          <button class="btn btn-brand-outline" id="btn-back-login"><i
-              class="bi bi-arrow-left me-2"></i>ย้อนกลับ</button>
+        <div class="selection-summary-content">
+          <div class="selection-summary-label">คุณเลือกสมัครเรียน</div>
+          <div class="selection-summary-value">ระดับ <strong>${levelText}</strong>  ·  สาขาวิชา <strong>${branchText}</strong></div>
         </div>
-      </div>
-    </section>
+      </div>`;
+  }
 
 
-        <section id="form-section" class="d-none">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="section-title mb-0">ใบสมัครเข้าศึกษาต่อ</h2>
-        <button class="btn btn-sm btn-brand-outline" id="btn-back-login2"><i
-            class="bi bi-arrow-left me-1"></i>ย้อนกลับ</button>
-      </div>
+  let appCropper = null;
+  let currentCropTarget = null;
+  const appCropModalEl = document.getElementById('appCropModal');
 
-      <div class="alert alert-info mb-4" style="border: 1px solid var(--sky);">
-        <h5 class="mb-3" style="font-weight: 600;"><i class="bi bi-info-circle-fill me-2"></i>คำแนะนำก่อนกรอกใบสมัคร
-        </h5>
-        <ul class="mb-3" style="line-height: 1.8;">
-          <li>กรุณากรอกข้อมูลให้ครบถ้วน และตรวจสอบความถูกต้องก่อนกดปุ่มบันทึกข้อมูล</li>
-        </ul>
-
-        <h6 style="font-weight: 600;"><i class="bi bi-folder2-open me-2"></i>เอกสารประกอบการสมัครเรียน</h6>
-        <ul class="mb-3" style="line-height: 1.8;">
-          <li>รูปถ่ายขนาด 1 นิ้ว</li>
-          <li>สำเนาบัตรประชาชน</li>
-          <li>สำเนาทะเบียนบ้าน</li>
-        </ul>
-
-        <hr>
-        <p class="mb-2">
-          <i class="bi bi-exclamation-circle me-1"></i>
-          หากไม่เข้าใจ หรือมีข้อสงสัย ให้ติดต่อ : ครูอมรรัตน์ พรหมแก้ว (ครูแจง)
-
-          <i class="bi bi-telephone-fill me-2 text-primary"></i> 086-7427316 ::
-          LINE id: jubjang0406 หรือสอบถามได้ใน
-          <a href="#" target="_blank" class="contact-line-link fw-bold">LINE</a>
-        </p>
-        <p class="mb-0 text-muted" style="font-size: 0.9rem;">
-          <i class="bi bi-exclamation-circle me-1"></i> แจ้งแก้ไขข้อมูล หรือส่งสลิปแจ้งการโอนเงินได้ที่
-          <a href="#" target="_blank" class="contact-line-link fw-bold">LINE</a>
-        </p>
-      </div>
-
-      <form id="form-apply" novalidate>
-        <input type="hidden" id="idcard" name="idcard">
-
-        <fieldset class="form-section">
-          <legend>เลือกระดับและสาขาวิชา</legend>
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label">ระดับการศึกษา <span class="text-danger">*</span></label>
-              <div class="info-source-grid">
-                <input type="radio" class="btn-check" name="reg_type" id="type_pvc" value="ปวช." required>
-                <label class="btn btn-info-source" for="type_pvc"><i class="bi bi-mortarboard me-1"></i>ปวช. (เรียน 3
-                  ปี)</label>
-                <input type="radio" class="btn-check" name="reg_type" id="type_pvs" value="ปวส." required>
-                <label class="btn btn-info-source" for="type_pvs"><i class="bi bi-mortarboard-fill me-1"></i>ปวส. (เรียน
-                  2 ปี)</label>
-              </div>
-            </div>
-            <div class="col-12">
-              <label class="form-label">สาขาวิชา <span class="text-danger">*</span></label>
-              <select class="form-select" id="branch_select" required disabled>
-                <option value="">— กรุณาเลือกระดับก่อน —</option>
-              </select>
-            </div>
-            <div class="col-12" id="selection_summary_box"></div>
-            <div class="col-12" id="level_promo_box"></div>
-            <div class="col-12" id="branch_price_box"></div>
-          </div>
-        </fieldset>
-
-        <fieldset class="form-section">
-          <legend>1. ข้อมูลผู้สมัครเรียน</legend>
-          <div class="row g-3">
-            <div class="col-md-2">
-              <label class="form-label">คำนำหน้า <span class="text-danger">*</span></label>
-              <select class="form-select" name="prefix" required>
-                <option value="นาย">นาย</option>
-                <option value="นางสาว">นางสาว</option>
-                <option value="นาง">นาง</option>
-                <option value="เด็กชาย">เด็กชาย</option>
-                <option value="เด็กหญิง">เด็กหญิง</option>
-              </select>
-            </div>
-            <div class="col-md-5"><label class="form-label">ชื่อ <span class="text-danger">*</span></label><input
-                class="form-control" name="name" required></div>
-            <div class="col-md-5"><label class="form-label">นามสกุล <span class="text-danger">*</span></label><input
-                class="form-control" name="lastname" required></div>
-            <div class="col-md-4"><label class="form-label">ชื่อเล่น</label><input class="form-control" name="nickname">
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">วันเกิด <span class="text-danger">*</span></label>
-              <div class="row g-2" id="dob_group">
-                <div class="col-4">
-                  <select class="form-select" id="dob_day" aria-label="วัน">
-                    <option value="">วัน</option>
-                  </select>
-                </div>
-                <div class="col-4">
-                  <select class="form-select" id="dob_month" aria-label="เดือน">
-                    <option value="">เดือน</option>
-                    <option value="1">ม.ค.</option>
-                    <option value="2">ก.พ.</option>
-                    <option value="3">มี.ค.</option>
-                    <option value="4">เม.ย.</option>
-                    <option value="5">พ.ค.</option>
-                    <option value="6">มิ.ย.</option>
-                    <option value="7">ก.ค.</option>
-                    <option value="8">ส.ค.</option>
-                    <option value="9">ก.ย.</option>
-                    <option value="10">ต.ค.</option>
-                    <option value="11">พ.ย.</option>
-                    <option value="12">ธ.ค.</option>
-                  </select>
-                </div>
-                <div class="col-4">
-                  <select class="form-select" id="dob_year" aria-label="ปี (พ.ศ.)">
-                    <option value="">ปี (พ.ศ.)</option>
-                  </select>
-                </div>
-              </div>
-              <input type="hidden" name="birthday" id="birthday_hidden">
-            </div>
-            <div class="col-md-4"><label class="form-label">เลขประจำตัวประชาชน</label><input class="form-control"
-                id="idcard_display" disabled></div>
-            <div class="col-md-3"><label class="form-label">เชื้อชาติ <span class="text-danger">*</span></label><input
-                class="form-control" name="race" value="ไทย" required></div>
-            <div class="col-md-3"><label class="form-label">สัญชาติ <span class="text-danger">*</span></label><input
-                class="form-control" name="nationality" value="ไทย" required></div>
-            <div class="col-md-3"><label class="form-label">ศาสนา <span class="text-danger">*</span></label><input
-                class="form-control" name="religion" required></div>
-            <div class="col-md-3"><label class="form-label">น้ำหนัก (กก.) <span
-                  class="text-danger">*</span></label><input type="number" class="form-control" name="weight" required>
-            </div>
-            <div class="col-md-3"><label class="form-label">ส่วนสูง (ซม.) <span
-                  class="text-danger">*</span></label><input type="number" class="form-control" name="height" required>
-            </div>
-            <div class="col-md-6"><label class="form-label">เบอร์โทรศัพท์ <span
-                  class="text-danger">*</span></label><input class="form-control" name="student_phone" maxlength="10"
-                required></div>
-            <div class="col-md-6"><label class="form-label">E-mail <span class="text-danger">*</span></label><input
-                type="email" class="form-control" name="student_email" required></div>
-          </div>
-        </fieldset>
-
-        <fieldset class="form-section">
-          <legend>2. ประวัติการศึกษา</legend>
-          <div class="row g-3">
-            <div class="col-md-6"><label class="form-label">จบการศึกษาในระดับ / กำลังศึกษาระดับ <span
-                  class="text-danger">*</span></label><input class="form-control" name="old_grad" required></div>
-            <div class="col-md-6"><label class="form-label">ปี พ.ศ. ที่จบ <span
-                  class="text-danger">*</span></label><input class="form-control" name="old_grad_year" required></div>
-            <div class="col-md-6"><label class="form-label">สถานศึกษาเดิม <span
-                  class="text-danger">*</span></label><input class="form-control" name="school" required></div>
-            <div class="col-md-6"><label class="form-label">จังหวัด <span class="text-danger">*</span></label><input
-                class="form-control" name="school_province" required></div>
-          </div>
-        </fieldset>
-
-        <fieldset class="form-section">
-          <legend>3. ที่อยู่ปัจจุบัน</legend>
-          <div class="row g-3">
-            <div class="col-md-3"><label class="form-label">บ้านเลขที่</label><input class="form-control"
-                name="house_no"></div>
-            <div class="col-md-2"><label class="form-label">หมู่ที่</label><input class="form-control"
-                name="village_no"></div>
-            <div class="col-md-4"><label class="form-label">หมู่บ้าน/ชุมชน</label><input class="form-control"
-                name="village"></div>
-            <div class="col-md-3"><label class="form-label">ถนน</label><input class="form-control" name="road"></div>
-            <div class="col-md-3"><label class="form-label">ซอย</label><input class="form-control" name="alley"></div>
-            <div class="col-md-3 thai-addr-field">
-              <label class="form-label">ตำบล/แขวง</label>
-              <input class="form-control" name="district" id="addr_district" autocomplete="off"
-                data-thai-addr="district">
-              <div class="thai-addr-suggest" id="addr_district_suggest"></div>
-            </div>
-            <div class="col-md-3 thai-addr-field">
-              <label class="form-label">อำเภอ/เขต</label>
-              <input class="form-control" name="amphoe" id="addr_amphoe" autocomplete="off" data-thai-addr="amphoe">
-              <div class="thai-addr-suggest" id="addr_amphoe_suggest"></div>
-            </div>
-            <div class="col-md-3 thai-addr-field">
-              <label class="form-label">จังหวัด</label>
-              <input class="form-control" name="province" id="addr_province" autocomplete="off"
-                data-thai-addr="province">
-              <div class="thai-addr-suggest" id="addr_province_suggest"></div>
-            </div>
-            <div class="col-md-3 thai-addr-field">
-              <label class="form-label">รหัสไปรษณีย์</label>
-              <input class="form-control" name="zipcode" id="addr_zipcode" autocomplete="off" data-thai-addr="zipcode">
-              <div class="thai-addr-suggest" id="addr_zipcode_suggest"></div>
-            </div>
-            <div class="col-12">
-              <div class="form-text"><i class="bi bi-info-circle me-1"></i>พิมพ์ตำบล/อำเภอ/จังหวัด/รหัสไปรษณีย์
-                อย่างใดอย่างหนึ่ง แล้วเลือกจากรายการ ระบบจะเติมช่องอื่น ๆ ให้อัตโนมัติ</div>
-            </div>
-          </div>
-        </fieldset>
-
-        <fieldset class="form-section">
-          <legend>4. ข้อมูลผู้ปกครอง</legend>
-          <div class="row g-3">
-            <div class="col-md-4"><label class="form-label">ชื่อ-สกุล บิดา <span
-                  class="text-danger father-required-star d-none">*</span></label><input class="form-control"
-                name="father"></div>
-            <div class="col-md-4"><label class="form-label">อาชีพบิดา <span
-                  class="text-danger father-required-star d-none">*</span></label><input class="form-control"
-                name="father_occupation"></div>
-            <div class="col-md-4"><label class="form-label">เบอร์โทรบิดา <span
-                  class="text-danger father-required-star d-none">*</span></label><input class="form-control"
-                name="father_phone" maxlength="10"></div>
-            <div class="col-md-4"><label class="form-label">ชื่อ-สกุล มารดา <span
-                  class="text-danger mother-required-star d-none">*</span></label><input class="form-control"
-                name="mother"></div>
-            <div class="col-md-4"><label class="form-label">อาชีพมารดา <span
-                  class="text-danger mother-required-star d-none">*</span></label><input class="form-control"
-                name="mother_occupation"></div>
-            <div class="col-md-4"><label class="form-label">เบอร์โทรมารดา <span
-                  class="text-danger mother-required-star d-none">*</span></label><input class="form-control"
-                name="mother_phone" maxlength="10"></div>
-
-            <div class="col-12 mt-2">
-              <label class="form-label d-block">ผู้ปกครองที่ติดต่อได้สะดวกที่สุด</label>
-              <div class="btn-group" role="group" id="parent_type_group">
-                <input type="radio" class="btn-check" name="parent_type" id="pt1" value="บิดา">
-                <label class="btn btn-outline-primary btn-sm" for="pt1">บิดา</label>
-                <input type="radio" class="btn-check" name="parent_type" id="pt2" value="มารดา">
-                <label class="btn btn-outline-primary btn-sm" for="pt2">มารดา</label>
-                <input type="radio" class="btn-check" name="parent_type" id="pt3" value="อื่นๆ">
-                <label class="btn btn-outline-primary btn-sm" for="pt3">อื่นๆ</label>
-              </div>
-              <div class="form-text">ไม่บังคับเลือก แต่ถ้าเลือก "บิดา" หรือ "มารดา"
-                ต้องกรอกข้อมูลของบุคคลนั้นด้านบนให้ครบ ถ้าเลือก "อื่นๆ" ต้องกรอกข้อมูลผู้ปกครองด้านล่างนี้ให้ครบแทน
-              </div>
-            </div>
-            <div class="col-md-4"><label class="form-label">ชื่อ-สกุล ผู้ปกครอง <span
-                  class="text-danger parent-required-star d-none">*</span></label><input class="form-control"
-                name="parent"></div>
-            <div class="col-md-3"><label class="form-label">อาชีพ</label><input class="form-control"
-                name="parent_occupation"></div>
-            <div class="col-md-3"><label class="form-label">เบอร์โทร <span
-                  class="text-danger parent-required-star d-none">*</span></label><input class="form-control"
-                name="parent_phone" maxlength="10"></div>
-            <div class="col-md-2"><label class="form-label">เกี่ยวข้องเป็น <span
-                  class="text-danger parent-required-star d-none">*</span></label><input class="form-control"
-                name="parent_relationship"></div>
-          </div>
-        </fieldset>
-
-        <fieldset class="form-section">
-          <legend>5. ทราบข้อมูลการสมัครเรียนจาก <span class="text-danger">*</span></legend>
-          <div class="info-source-grid">
-            <input type="radio" class="btn-check" name="info_source" id="src_1" value="ครูจากวิทยาลัยที่มาแนะแนว"
-              required>
-            <label class="btn btn-info-source" for="src_1"><i
-                class="bi bi-person-badge me-1"></i>ครูจากวิทยาลัยที่มาแนะแนว</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_2" value="ครูแนะแนวที่โรงเรียนเดิม">
-            <label class="btn btn-info-source" for="src_2"><i
-                class="bi bi-person-video3 me-1"></i>ครูแนะแนวที่โรงเรียนเดิม</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_3" value="เพื่อน">
-            <label class="btn btn-info-source" for="src_3"><i class="bi bi-people me-1"></i>เพื่อน</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_4" value="ผู้ปกครอง">
-            <label class="btn btn-info-source" for="src_4"><i class="bi bi-house-heart me-1"></i>ผู้ปกครอง</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_5" value="ญาติ">
-            <label class="btn btn-info-source" for="src_5"><i class="bi bi-person-hearts me-1"></i>ญาติ</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_6" value="รุ่นพี่">
-            <label class="btn btn-info-source" for="src_6"><i class="bi bi-mortarboard me-1"></i>รุ่นพี่</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_7" value="ค้นหาจาก Google">
-            <label class="btn btn-info-source" for="src_7"><i class="bi bi-google me-1"></i>ค้นหาจาก Google</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_8" value="เว็บไซต์วิทยาลัย">
-            <label class="btn btn-info-source" for="src_8"><i class="bi bi-globe me-1"></i>เว็บไซต์วิทยาลัย</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_9" value="เพจวิทยาลัยใน Facebook">
-            <label class="btn btn-info-source" for="src_9"><i class="bi bi-facebook me-1"></i>เพจวิทยาลัยใน
-              Facebook</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_10" value="เพจสาขาใน Facebook">
-            <label class="btn btn-info-source" for="src_10"><i class="bi bi-facebook me-1"></i>เพจสาขาใน
-              Facebook</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_11" value="LINE">
-            <label class="btn btn-info-source" for="src_11"><i class="bi bi-chat-dots me-1"></i>LINE</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_12" value="Instagram">
-            <label class="btn btn-info-source" for="src_12"><i class="bi bi-instagram me-1"></i>Instagram</label>
-
-            <input type="radio" class="btn-check" name="info_source" id="src_13" value="TikTok">
-            <label class="btn btn-info-source" for="src_13"><i class="bi bi-tiktok me-1"></i>TikTok</label>
-          </div>
-        </fieldset>
-
-        <fieldset class="form-section">
-          <legend>เอกสารแนบ</legend>
-          <p class="form-text mt-0">ไฟล์แต่ละไฟล์ (รองรับเฉพาะไฟล์รูปภาพ) ขนาดไม่เกิน 5 MB</p>
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label">รูปถ่าย (สำหรับใบสมัคร)</label>
-              <button type="button" class="btn btn-outline-primary w-100 btn-open-crop-modal" data-target="photo"
-                data-title="รูปถ่าย (หน้าตรง)">
-                <i class="bi bi-camera me-1"></i> อัปโหลดรูปถ่าย
-              </button>
-              <input type="hidden" id="file_photo_data">
-              <div id="preview_photo" class="file-preview-box mt-2"></div>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">สำเนาบัตรประชาชน</label>
-              <button type="button" class="btn btn-outline-primary w-100 btn-open-crop-modal" data-target="doc1"
-                data-title="สำเนาบัตรประชาชน">
-                <i class="bi bi-person-vcard me-1"></i> อัปโหลดบัตรประชาชน
-              </button>
-              <input type="hidden" id="file_doc1_data">
-              <div id="preview_doc1" class="file-preview-box mt-2"></div>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">สำเนาทะเบียนบ้าน</label>
-              <button type="button" class="btn btn-outline-primary w-100 btn-open-crop-modal" data-target="doc2"
-                data-title="สำเนาทะเบียนบ้าน">
-                <i class="bi bi-house me-1"></i> อัปโหลดทะเบียนบ้าน
-              </button>
-              <input type="hidden" id="file_doc2_data">
-              <div id="preview_doc2" class="file-preview-box mt-2"></div>
-            </div>
-          </div>
-        </fieldset>
-
-        <div class="d-grid">
-          <button type="submit" class="btn btn-brand btn-lg"><i class="bi bi-eye me-2"></i>ตรวจสอบข้อมูลก่อนส่ง</button>
-        </div>
-      </form>
-    </section>
+  if (appCropModalEl) {
+    const appCropModalInstance = new bootstrap.Modal(appCropModalEl);
+    const modalTitleSpan = document.getElementById('appCropModalTitle');
+    const ghostInput = document.getElementById('appCropGhostInput');
+    const cropperContainer = document.getElementById('appCropContainer');
+    const previewImg = document.getElementById('appCropPreviewImg');
+    const btnCancelCrop = document.getElementById('btnCancelCropData');
+    const btnConfirmCrop = document.getElementById('btnConfirmCrop');
 
 
-        <section id="confirm-section" class="d-none">
-      <div class="mx-auto card-soft p-4 p-md-5" style="max-width:720px">
-        <h3 class="section-title text-center mb-4"><i
-            class="bi bi-clipboard-check me-2"></i>กรุณาตรวจสอบข้อมูลก่อนยืนยันส่งใบสมัคร</h3>
-        <dl class="row" id="confirm-summary"></dl>
-        <div class="d-flex gap-2 mt-4">
-          <button class="btn btn-brand-outline w-50" id="btn-edit"><i class="bi bi-pencil me-2"></i>แก้ไขข้อมูล</button>
-          <button class="btn btn-brand w-50" id="btn-confirm-submit"><i
-              class="bi bi-send-check me-2"></i>ยืนยันส่งใบสมัคร</button>
-        </div>
-      </div>
-    </section>
+    const cropButtons = document.querySelectorAll('.btn-open-crop-modal');
+    cropButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentCropTarget = btn.getAttribute('data-target');
+        const titleText = btn.getAttribute('data-title');
+        if (modalTitleSpan) modalTitleSpan.textContent = titleText;
 
 
-        <section id="success-section" class="d-none">
-      <div class="mx-auto card-soft p-4 p-md-5" style="max-width:800px">
-        <div class="text-center mb-4">
-          <i class="bi bi-patch-check-fill display-4 text-success"></i>
-          <h3 class="mt-2 mb-1">ขอแสดงความยินดี!</h3>
-          <h4 class="mb-3">คุณได้ลงทะเบียนสมัครเรียน สำเร็จแล้ว</h4>
-          <p class="text-danger fw-bold large px-3">*** การสมัครเรียนจะสมบูรณ์
-            ก็ต่อเมื่อมีการส่งสลิปการชำระค่าธรรมเนียมการเรียนเท่านั้น</p>
-        </div>
-        <p class="section-sub text-center">เลขที่ใบสมัคร <strong id="success-docno"></strong></p>
-        <dl class="row mb-0 mt-4" id="success-summary"></dl>
+        if (appCropper) { appCropper.destroy(); appCropper = null; }
+        previewImg.src = '';
+        cropperContainer.style.display = 'none';
 
-        <div id="success-payment-box" class="mt-4"></div>
+        appCropModalInstance.show();
+      });
+    });
 
-        <div id="pdf-status-error" class="alert alert-danger text-start mt-4 mb-0 d-none"></div>
-        <div class="d-grid gap-2 mt-4">
-          <a href="#" id="success-pdf-link" target="_blank" class="btn btn-brand btn-lg"><i
-              class="bi bi-file-earmark-pdf me-2"></i>ดาวน์โหลดใบสมัคร PDF</a>
-          <a href="index.html" class="btn btn-brand-outline">กลับหน้าแรก</a>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <div id="site-footer"></div>
+    function initCropper(url) {
+      cropperContainer.style.display = 'block';
+      previewImg.src = url;
+      if (appCropper) appCropper.destroy();
 
 
-    <div class="modal fade" id="promoImageModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-      <div class="modal-content bg-transparent border-0 shadow-none">
-        <div class="modal-body p-0 text-center position-relative">
-          <button type="button"
-            class="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-2 bg-dark bg-opacity-50 rounded-circle"
-            data-bs-dismiss="modal" aria-label="ปิด" style="z-index:10;"></button>
-          <img id="promoImageModalImg" src="" alt="โปรโมชั่น" class="img-fluid rounded-4 shadow-lg"
-            style="max-height:85vh; cursor:zoom-out;" data-bs-dismiss="modal">
-        </div>
-      </div>
-    </div>
-  </div>
+      const ratio = (currentCropTarget === 'photo') ? (3 / 4) : NaN;
+
+      appCropper = new Cropper(previewImg, {
+        aspectRatio: ratio,
+        viewMode: 1,
+        autoCropArea: 0.8,
+      });
+    }
+
+    if (ghostInput) {
+      ghostInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) initCropper(URL.createObjectURL(file));
+        e.target.value = '';
+      });
+    }
+
+    appCropModalEl.addEventListener('paste', (e) => {
+      const items = e.clipboardData.items;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          initCropper(URL.createObjectURL(item.getAsFile()));
+          break;
+        }
+      }
+    });
+
+    const updateDocumentThumbnail = (target, blob) => {
+      const preview = document.getElementById(`preview_${target}`);
+      if (!blob) {
+        preview.innerHTML = '';
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const name = target === 'photo' ? 'photo_cropped.jpg' : (target === 'doc1' ? 'idcard_cropped.jpg' : 'housereg_cropped.jpg');
+
+      preview.innerHTML = `
+        <div class="file-thumb-wrap">
+          <img src="${url}" alt="${name}" class="file-thumb-img" style="cursor: zoom-in;" title="คลิกเพื่อดูรูปขนาดเต็ม">
+          <button type="button" class="file-thumb-remove" title="ลบไฟล์" id="remove_${target}_btn">&times;</button>
+          <div class="file-thumb-name">${name}</div>
+        </div>`;
+
+      preview.querySelector('img').addEventListener('click', () => {
+        const modalImg = document.getElementById('promoImageModalImg');
+        if (modalImg) {
+          modalImg.src = url;
+          new bootstrap.Modal(document.getElementById('promoImageModal')).show();
+        }
+      });
+
+      preview.querySelector(`#remove_${target}_btn`).addEventListener('click', () => {
+        files[target] = null;
+        document.getElementById(`file_${target}_data`).value = '';
+        preview.innerHTML = '';
+      });
+    };
+
+    if (btnCancelCrop) {
+      btnCancelCrop.addEventListener('click', () => {
+        if (appCropper) { appCropper.destroy(); appCropper = null; }
+        previewImg.src = '';
+        cropperContainer.style.display = 'none';
+      });
+    }
+
+    if (btnConfirmCrop) {
+      btnConfirmCrop.addEventListener('click', () => {
+        if (!appCropper) return showToast('กรุณาเลือกรูปภาพก่อน', 'warning');
 
 
-    <div class="modal fade" id="appCropModal" tabindex="-1" style="z-index: 1065;">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-crop me-2"></i>อัปโหลด <span id="appCropModalTitle"></span></h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body text-center">
-          <div class="mb-3">
-            <button class="btn btn-brand-outline shadow-sm me-2"
-              onclick="document.getElementById('appCropGhostInput').click()">
-              <i class="bi bi-folder2-open me-1"></i> เลือกจากแฟ้ม
-            </button>
-            <input type="file" id="appCropGhostInput" accept="image/*" class="d-none">
-            <p class="text-muted small mt-2 mb-0">หรือ "คัดลอกรูป" แล้วกดวาง (Ctrl+V) ที่นี่ได้เลย</p>
-          </div>
-          <div id="appCropContainer" style="display:none; max-height: 50vh;"
-            class="bg-light p-2 border rounded-3 text-center position-relative mt-3">
-            <button type="button"
-              class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 rounded-circle shadow z-3"
-              id="btnCancelCropData" style="width: 32px; height: 32px; padding: 0; line-height: 1;" title="ยกเลิกรูป"><i
-                class="bi bi-x fs-5"></i></button>
-            <img id="appCropPreviewImg" src="" style="max-width: 100%;">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
-          <button type="button" class="btn btn-success" id="btnConfirmCrop"><i class="bi bi-check2-circle me-1"></i>
-            ใช้รูปนี้</button>
-        </div>
-      </div>
-    </div>
-  </div>
+        let canvasParams = {};
+        if (currentCropTarget === 'photo') {
+          canvasParams = { width: 300, height: 400 };
+        } else {
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+          canvasParams = { maxWidth: 1200, maxHeight: 1600 };
+        }
 
-</script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js">
+        appCropper.getCroppedCanvas(canvasParams).toBlob((blob) => {
+          files[currentCropTarget] = blob;
+          document.getElementById(`file_${currentCropTarget}_data`).value = 'cropped';
+          updateDocumentThumbnail(currentCropTarget, blob);
+          appCropModalInstance.hide();
 
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+          if (appCropper) { appCropper.destroy(); appCropper = null; }
+          previewImg.src = '';
+          cropperContainer.style.display = 'none';
+        }, 'image/jpeg', 0.85);
+      });
+    }
+  }
 
-</script>
+  function syncParentInfo() {
+    const type = document.querySelector('input[name="parent_type"]:checked')?.value;
+    const pName = document.querySelector('input[name="parent"]');
+    const pOcc = document.querySelector('input[name="parent_occupation"]');
+    const pPhone = document.querySelector('input[name="parent_phone"]');
+    const pRel = document.querySelector('input[name="parent_relationship"]');
+    const parentStars = document.querySelectorAll('.parent-required-star');
+    const fatherStars = document.querySelectorAll('.father-required-star');
+    const motherStars = document.querySelectorAll('.mother-required-star');
 
-    <script src="https://cdn.jsdelivr.net/npm/pizzip@3.2.0/dist/pizzip.min.js">
 
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.70.0/build/docxtemplater.min.js">
+    parentStars.forEach(s => s.classList.add('d-none'));
+    fatherStars.forEach(s => s.classList.add('d-none'));
+    motherStars.forEach(s => s.classList.add('d-none'));
 
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.2/dist/jszip.min.js">
+    if (type === 'บิดา' || type === 'มารดา') {
+      const prefix = type === 'บิดา' ? 'father' : 'mother';
+      pName.value = document.querySelector(`input[name="${prefix}"]`).value;
+      pOcc.value = document.querySelector(`input[name="${prefix}_occupation"]`).value;
+      pPhone.value = document.querySelector(`input[name="${prefix}_phone"]`).value;
+      pRel.value = type;
 
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.4.0/dist/docx-preview.min.js">
+      pName.required = false;
+      pPhone.required = false;
+      pRel.required = false;
+      [pName, pPhone, pRel].forEach(el => el.classList.remove('is-invalid'));
 
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js">
+      (type === 'บิดา' ? fatherStars : motherStars).forEach(s => s.classList.remove('d-none'));
+    } else if (type === 'อื่นๆ') {
+      if (pRel.value === 'บิดา' || pRel.value === 'มารดา') {
 
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js">
+        pName.value = '';
+        pOcc.value = '';
+        pPhone.value = '';
+        pRel.value = '';
+      }
 
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js">
+      pName.required = true;
+      pPhone.required = true;
+      pRel.required = true;
+      parentStars.forEach(s => s.classList.remove('d-none'));
+    } else {
 
-</script>
-  <script src="assets/js/footer.js">
+      pName.required = false;
+      pPhone.required = false;
+      pRel.required = false;
+    }
+  }
 
-</script>
-  <script src="assets/js/config.js">
+  document.querySelectorAll('input[name="parent_type"]').forEach(r => r.addEventListener('change', syncParentInfo));
+  ['father', 'mother'].forEach(p => {
+    ['', '_occupation', '_phone'].forEach(s => {
+      const el = document.querySelector(`input[name="${p}${s}"]`);
+      el.addEventListener('input', () => { el.classList.remove('is-invalid'); syncParentInfo(); });
+    });
+  });
 
-</script>
-  <script src="assets/js/supabase-client.js">
+  function validateFormFields(form) {
+    let ok = true;
+    let firstInvalid = null;
 
-</script>
-  <script src="assets/js/docx-pdf-generate.js">
 
-</script>
-  <script src="assets/js/thai-address.js">
+    form.querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=hidden]), select, textarea').forEach(el => {
+      if (el.disabled) return;
+      el.classList.remove('is-invalid');
+      if (!el.checkValidity()) {
+        el.classList.add('is-invalid');
+        ok = false;
+        if (!firstInvalid) firstInvalid = el;
+      }
+    });
 
-</script>
-  <script src="assets/js/apply.js">
 
-</script>
-</body>
+    const groups = {};
+    form.querySelectorAll('input[type=radio]').forEach(r => {
+      (groups[r.name] = groups[r.name] || []).push(r);
+    });
+    Object.values(groups).forEach(radios => {
+      const container = radios[0].closest('.info-source-grid, #parent_type_group') || radios[0].parentElement;
+      const anyRequired = radios.some(r => r.required);
+      const anyChecked = radios.some(r => r.checked);
+      if (anyRequired && !anyChecked) {
+        ok = false;
+        container.classList.add('is-invalid-group');
+        if (!firstInvalid) firstInvalid = container;
+      } else {
+        container.classList.remove('is-invalid-group');
+      }
+    });
 
-</html>
+
+    const dobGroup = document.getElementById('dob_group');
+    const birthdayHidden = document.getElementById('birthday_hidden');
+    if (dobGroup && birthdayHidden) {
+      if (!birthdayHidden.value) {
+        ok = false;
+        dobGroup.classList.add('is-invalid-group');
+        if (!firstInvalid) firstInvalid = dobGroup;
+      } else {
+        dobGroup.classList.remove('is-invalid-group');
+      }
+    }
+
+
+
+
+    const parentType = form.querySelector('input[name="parent_type"]:checked')?.value;
+    if (parentType === 'บิดา' || parentType === 'มารดา') {
+      const prefix = parentType === 'บิดา' ? 'father' : 'mother';
+      ['', '_occupation', '_phone'].forEach(suffix => {
+        const el = form.querySelector(`input[name="${prefix}${suffix}"]`);
+        if (!el) return;
+        el.classList.remove('is-invalid');
+        if (!el.value.trim()) {
+          el.classList.add('is-invalid');
+          ok = false;
+          if (!firstInvalid) firstInvalid = el;
+        }
+      });
+    }
+
+    return { ok, firstInvalid };
+  }
+
+
+  document.getElementById('form-apply').querySelectorAll('input, select, textarea').forEach(el => {
+    el.addEventListener('input', () => el.classList.remove('is-invalid'));
+    el.addEventListener('change', () => {
+      el.classList.remove('is-invalid');
+      const group = el.closest('.info-source-grid, #parent_type_group, #dob_group');
+      if (group) group.classList.remove('is-invalid-group');
+    });
+  });
+
+  document.getElementById('form-apply').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const { ok, firstInvalid } = validateFormFields(form);
+    if (!ok) {
+      showToast('กรุณากรอกข้อมูลที่จำเป็น (มีเครื่องหมาย *) ให้ครบถ้วน', 'danger');
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (typeof firstInvalid.focus === 'function') firstInvalid.focus();
+      }
+      return;
+    }
+    if (!selectedBranch) { showToast('กรุณาเลือกสาขาวิชา', 'danger'); return; }
+
+    const fd = new FormData(form);
+    const level = document.querySelector('input[name="reg_type"]:checked').value;
+
+    pendingPayload = {
+      idcard: document.getElementById('idcard').value,
+      level,
+      branch: branchDisplayName(selectedBranch),
+      branch_id: selectedBranch.id,
+    };
+    ['prefix', 'name', 'lastname', 'nickname', 'birthday', 'race', 'nationality', 'religion', 'weight', 'height',
+      'student_phone', 'student_email', 'old_grad', 'old_grad_year', 'school', 'school_province',
+      'house_no', 'village_no', 'village', 'road', 'alley', 'district', 'amphoe', 'province', 'zipcode',
+      'father', 'father_occupation', 'father_phone', 'mother', 'mother_occupation', 'mother_phone',
+      'parent', 'parent_occupation', 'parent_phone', 'parent_relationship', 'info_source'
+    ].forEach(k => pendingPayload[k] = fd.get(k) || '');
+
+    renderConfirm(pendingPayload);
+    showSection('confirm');
+  });
+
+  function renderConfirm(p) {
+    const dl = document.getElementById('confirm-summary');
+    dl.innerHTML = [
+      summaryRow('สมัครเรียน', `${p.level} ${p.branch}`),
+      summaryRow('ชื่อ-นามสกุล', `${p.prefix}${p.name} ${p.lastname} (${p.nickname || '-'})`),
+      summaryRow('เลขประจำตัวประชาชน', p.idcard),
+      summaryRow('วันเกิด', p.birthday),
+      summaryRow('เบอร์โทร', p.student_phone),
+      summaryRow('E-mail', p.student_email),
+      summaryRow('สถานศึกษาเดิม', `${p.school} (${p.school_province})`),
+      summaryRow('ที่อยู่', [p.house_no, p.village_no && ('หมู่ ' + p.village_no), p.village, p.district, p.amphoe, p.province, p.zipcode].filter(Boolean).join(' ')),
+      summaryRow('ผู้ปกครอง', p.parent || p.father || p.mother || '-'),
+      summaryRow('ทราบข้อมูลจาก', p.info_source),
+      summaryRow('เอกสารแนบ', `<div class="d-flex flex-wrap gap-3">${buildAttachmentThumbsHtml()}</div>`),
+    ].join('');
+
+
+    dl.querySelectorAll('.confirm-thumb-zoomable').forEach(img => {
+      img.addEventListener('click', () => {
+        document.getElementById('promoImageModalImg').src = img.src;
+        new bootstrap.Modal(document.getElementById('promoImageModal')).show();
+      });
+    });
+  }
+
+  function buildAttachmentThumbsHtml() {
+    const items = [
+      { key: 'photo', previewId: 'preview_photo', label: 'รูปถ่าย' },
+      { key: 'doc1', previewId: 'preview_doc1', label: 'สำเนาบัตรประชาชน' },
+      { key: 'doc2', previewId: 'preview_doc2', label: 'สำเนาทะเบียนบ้าน' },
+    ];
+    let html = '';
+    items.forEach(({ key, previewId, label }) => {
+      const file = files[key];
+      if (!file) return;
+      const imgEl = document.querySelector(`#${previewId} .file-thumb-img`);
+      if (imgEl) {
+        html += `
+          <div class="confirm-attach-thumb">
+            <img src="${imgEl.src}" alt="${label}" class="confirm-thumb-img confirm-thumb-zoomable" title="คลิกเพื่อดูรูปขนาดเต็ม">
+            <div class="confirm-thumb-label">${label}</div>
+          </div>`;
+      } else {
+        html += `
+          <div class="confirm-attach-thumb">
+            <div class="confirm-thumb-icon"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+            <div class="confirm-thumb-label">${label}</div>
+          </div>`;
+      }
+    });
+    return html || '<span class="text-muted">ไม่มีไฟล์แนบ</span>';
+  }
+
+  document.getElementById('btn-edit').addEventListener('click', () => showSection('form'));
+
+  document.getElementById('btn-confirm-submit').addEventListener('click', async () => {
+    try {
+      showLoader('กำลังอัปโหลดเอกสาร...');
+      const idcard = pendingPayload.idcard;
+
+      if (files.photo) pendingPayload.file1 = await uploadFile(files.photo, `${idcard}/photo`);
+      if (files.doc1) pendingPayload.file2 = await uploadFile(files.doc1, `${idcard}/doc1`);
+      if (files.doc2) pendingPayload.file3 = await uploadFile(files.doc2, `${idcard}/doc2`);
+
+      showLoader('กำลังบันทึกใบสมัคร...');
+      const { data, error } = await sb.rpc('submit_application', { p: pendingPayload });
+      if (error) throw error;
+
+      if (data.result === 'exists') {
+        hideLoader();
+        showToast('พบเลขประจำตัวประชาชนนี้ในระบบแล้ว', 'danger');
+        showSection('login');
+        return;
+      }
+
+      const app = data.data;
+
+
+
+
+      showLoader('กำลังสร้างไฟล์ใบสมัคร PDF...');
+      const pdfUrl = await buildAndUploadPdf(app, files.photo, files.doc1, files.doc2);
+
+
+
+      showLoader('กำลังส่งอีเมลยืนยัน...');
+      const isEmailEnabled = (cfg.enable_send_email === undefined) ? true : String(cfg.enable_send_email).toUpperCase() === 'TRUE';
+      if (app.student_email && isEmailEnabled) {
+        try {
+          const { error: emailError } = await sb.functions.invoke('send-confirmation-email', {
+            body: { app: { ...app, pdf_url: pdfUrl } },
+          });
+          if (emailError) throw emailError;
+        } catch (emailErr) {
+          console.warn('ส่งอีเมลยืนยันไม่สำเร็จ (ไม่กระทบผลการสมัคร):', emailErr);
+        }
+      }
+
+      hideLoader();
+      document.getElementById('success-docno').textContent = app.doc_no;
+      document.getElementById('success-pdf-link').href = toViewDriveUrl(pdfUrl);
+      document.getElementById('success-summary').innerHTML = [
+        summaryRow('สมัครเรียน', `${app.level} ${app.branch}`),
+        summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`),
+        summaryRow('สถานะ', statusLabel(app.status)),
+      ].join('');
+      document.getElementById('pdf-status-error').classList.add('d-none');
+
+      renderPaymentBox(app, 'success-payment-box');
+
+      showSection('success');
+    } catch (err) {
+      console.error(err);
+      hideLoader();
+      showToast('เกิดข้อผิดพลาดในการส่งใบสมัคร กรุณาลองใหม่อีกครั้ง: ' + (err.message || err), 'danger');
+    }
+  });
+
+  async function uploadFile(file, pathPrefix) {
+    const filename = file.name || 'image.jpg';
+    const ext = (filename.split('.').pop() || 'dat').toLowerCase();
+    return uploadBytes(await file.arrayBuffer(), `${pathPrefix}.${ext}`, file.type);
+  }
+
+  async function uploadBytes(bytes, path, contentType) {
+    const idcard = path.split('/')[0];
+    const filename = path.split('/').slice(1).join('/') || path;
+
+    const form = new FormData();
+    form.append('file', new Blob([bytes], { type: contentType }), filename);
+    form.append('idcard', idcard);
+    form.append('filename', filename);
+
+    let fileId = null;
+    let retries = 3;
+    let lastErr = null;
+    while (retries > 0 && !fileId) {
+      try {
+        const { data, error } = await sb.functions.invoke('upload-media', { body: form });
+        if (error) throw error;
+        if (data && data.error) throw new Error(data.error);
+        fileId = data.fileId || data.directUrl || data.url;
+      } catch (invokeErr) {
+        lastErr = invokeErr;
+        retries--;
+        if (retries > 0) await new Promise(r => setTimeout(r, 1500));
+      }
+    }
+    if (!fileId) throw lastErr || new Error("Upload failed after 3 retries");
+    return fileId;
+  }
+})();
+
+
