@@ -109,7 +109,7 @@
 
       const exportData = data.map((a, idx) => ({
         'ลำดับ': idx + 1,
-        'เลขบัตรประชาชน': a.idcard ? "'" + a.idcard : '', 
+        'เลขบัตรประชาชน': a.idcard ? "'" + a.idcard : '',
         'ชื่อ-นามสกุล': (a.prefix || '') + (a.name || '') + ' ' + (a.lastname || ''),
         'ระดับ': a.level || '',
         'สาขา': a.branch || '',
@@ -235,7 +235,7 @@
       if (mIndex !== -1) {
         if (mIndex >= 12) mIndex -= 12;
         mIndex += 1;
-        if (y > 2400) y -= 543; 
+        if (y > 2400) y -= 543;
         return `${y}-${String(mIndex).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       }
     }
@@ -868,7 +868,7 @@
         const reportModalEl = document.getElementById('slipReportModal');
         const iframe = document.getElementById('slipReportIframe');
 
-        iframe.removeAttribute('src'); 
+        iframe.removeAttribute('src');
         iframe.srcdoc = `
           <!DOCTYPE html>
           <html>
@@ -931,7 +931,7 @@
 
     try {
       const { data, error } = await sb.functions.invoke('fetch-file', {
-        body: { fileId },
+        body: { mode: 'fetch_file', fileId: fileId },
       });
       if (!error && data && data.base64) {
         const binaryStr = atob(data.base64);
@@ -1341,7 +1341,7 @@
     SETTINGS_FIELDS.forEach(([key, label, type, group]) => {
       if (group !== currentGroup) {
         if (currentGroup !== '') {
-          html += `</div></div>`; 
+          html += `</div></div>`;
         }
         html += `<div class="card-soft bg-white mb-4">
                    <div class="border-bottom px-4 py-3 bg-light fw-bold text-brand" style="border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;">
@@ -1354,7 +1354,7 @@
       if (type === 'bool') {
         let checked;
         if (key === 'enable_send_email' && cfg[key] === undefined) {
-          checked = true; 
+          checked = true;
         } else {
           checked = String(cfg[key]).toUpperCase() === 'TRUE';
         }
@@ -1602,7 +1602,7 @@ if (csvInput) {
               height: (row.height && !isNaN(row.height)) ? parseFloat(row.height) : null,
               student_phone: row.student_phone || null,
               student_email: row.student_email || null,
-              student_lineid: row.student_lineid || null, 
+              student_lineid: row.student_lineid || null,
               old_grad: row.old_grad || null,
               old_grad_year: row.old_grad_year || null,
               school: row.school || null,
@@ -1647,7 +1647,7 @@ if (csvInput) {
           }
 
           showToast(`นำเข้าสำเร็จ ${success} รายการ, สร้างไม่ได้ ${errors} รายการ`, success > 0 ? 'success' : 'warning');
-          csvInput.value = ''; 
+          csvInput.value = '';
           if (typeof loadApplications === 'function') loadApplications(true);
 
         } catch (err) {
@@ -1688,7 +1688,7 @@ window.openAppPhotoModal = function (num) {
 
 window.clearAppPhoto = function (num, origFileId) {
   const fileInput = document.getElementById('edit_file' + num);
-  if (fileInput) fileInput.value = ''; 
+  if (fileInput) fileInput.value = '';
   const thumbContainer = document.getElementById('thumb_container_' + num);
   const noThumbText = document.getElementById('no_thumb_text_' + num);
   const thumbImg = document.getElementById('thumb_img_' + num);
