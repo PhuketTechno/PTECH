@@ -1041,13 +1041,8 @@
 
       const app = data.data;
 
-
-
-
       showLoader('กำลังสร้างไฟล์ใบสมัคร PDF...');
       const pdfUrl = await buildAndUploadPdf(app, files.photo, files.doc1, files.doc2);
-
-
 
       showLoader('กำลังส่งอีเมลยืนยัน...');
       const isEmailEnabled = (cfg.enable_send_email === undefined) ? true : String(cfg.enable_send_email).toUpperCase() === 'TRUE';
@@ -1065,6 +1060,16 @@
         } catch (emailErr) {
           console.warn('ส่งอีเมลยืนยันไม่สำเร็จ (ไม่กระทบผลการสมัคร):', emailErr);
         }
+      }
+
+      const isLineEnabled = String(cfg.enable_line_notify).toUpperCase() === 'TRUE';
+      if (isLineEnabled) {
+        sb.functions.invoke('send-line-notification', {
+          body: {
+            app: app,
+            pdf_url: toViewDriveUrl(pdfUrl)
+          }
+        }).catch(e => console.warn('Edge Function Line Notification Error:', e));
       }
 
       hideLoader();
