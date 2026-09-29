@@ -1,5 +1,4 @@
-<!-- Default Statcounter code for PTECH admission
-https://ptech.netlify.app/admission/ -->
+<!-- Default Statcounter code for PTECH admission -->
 <script type="text/javascript">
 var sc_project=12700068; 
 var sc_invisible=1; 
