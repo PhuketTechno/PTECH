@@ -558,17 +558,11 @@
     return `https://drive.google.com/file/d/${fileId}/view`;
   }
 
-  async function fetchAsBlobSafe(fileIdOrUrl) {
-    if (!fileIdOrUrl) return null;
-    let fileId = fileIdOrUrl.trim();
-    const driveMatch = fileId.match(/(?:(?:\/d\/)|(?:[?&]id=))([a-zA-Z0-9_-]{25,})/);
-    if (driveMatch && driveMatch[1]) {
-      fileId = driveMatch[1];
-    }
-
+  async function fetchAsBlobSafe(fileId) {
+    if (!fileId) return null;
     try {
       const { data, error } = await sb.functions.invoke('fetch-file', {
-        body: { mode: 'fetch_file', fileId: fileId },
+        body: { fileId },
       });
       if (!error && data && data.base64) {
         const binaryStr = atob(data.base64);
@@ -577,7 +571,6 @@
         return new Blob([bytes], { type: data.mimeType || 'application/octet-stream' });
       }
       if (data && data.error) console.warn('fetchAsBlobSafe: Edge Function returned logic error →', data.error);
-      if (error) console.warn('fetchAsBlobSafe: Edge Function fetch-file error →', error);
     } catch (e) {
       console.warn('fetchAsBlobSafe ล้มเหลว →', e.message);
     }
@@ -1053,13 +1046,8 @@
       const isEmailEnabled = (cfg.enable_send_email === undefined) ? true : String(cfg.enable_send_email).toUpperCase() === 'TRUE';
       if (app.student_email && isEmailEnabled) {
         try {
-          const currentUrl = window.location.origin + window.location.pathname.replace(/\/apply\.html$/, '');
           const { error: emailError } = await sb.functions.invoke('send-confirmation-email', {
-            body: {
-              app: { ...app, pdf_url: pdfUrl },
-              site_url: currentUrl,
-              origin_url: currentUrl
-            },
+            body: { app: { ...app, pdf_url: pdfUrl } },
           });
           if (emailError) throw emailError;
         } catch (emailErr) {
@@ -1088,8 +1076,7 @@
   });
 
   async function uploadFile(file, pathPrefix) {
-    const filename = file.name || 'image.jpg';
-    const ext = (filename.split('.').pop() || 'dat').toLowerCase();
+    const ext = (file.name.split('.').pop() || 'dat').toLowerCase();
     return uploadBytes(await file.arrayBuffer(), `${pathPrefix}.${ext}`, file.type);
   }
 
