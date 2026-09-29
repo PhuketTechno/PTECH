@@ -1301,6 +1301,10 @@
     ['form_closed', 'ปิดรับสมัครชั่วคราว', 'bool', '🏛️ ข้อมูลทั่วไป'],
     ['enable_send_email', 'ส่งอีเมลยืนยันการสมัครอัตโนมัติ', 'bool', '🏛️ ข้อมูลทั่วไป'],
 
+    ['enable_line_notify', 'เปิดใช้งานแจ้งเตือนผ่าน LINE (Messaging API)', 'bool', '🟢 การแจ้งเตือน (LINE)'],
+    ['line_access_token', 'LINE Channel Access Token', 'text', '🟢 การแจ้งเตือน (LINE)'],
+    ['line_group_id', 'LINE Group ID', 'text', '🟢 การแจ้งเตือน (LINE)'],
+
     ['youtube_id', 'YouTube Video ID (แนะนำขั้นตอนการสมัครเรียน)', 'text', '💬 วิดีโอ และการติดต่อ'],
 
     ['bank_name', 'ชื่อธนาคาร', 'text', '💳 การชำระเงิน'],
