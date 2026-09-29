@@ -1,5 +1,5 @@
 
-const DOCX_TEMPLATE_URL = '/assets/templates/application-template.docx';
+const DOCX_TEMPLATE_URL = 'assets/templates/application-template.docx';
 
 const THAI_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
@@ -173,7 +173,7 @@ async function imageBlobToJpgBytes(blob) {
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#ffffff'; 
+      ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       canvas.toBlob(async (outBlob) => {
@@ -190,12 +190,12 @@ async function appendAttachments(mainPdfBytes, attachments) {
 
   const { PDFDocument, rgb } = window.PDFLib;
   const finalDoc = await PDFDocument.load(mainPdfBytes);
-  const pageWidth = 612; 
+  const pageWidth = 612;
   const pageHeight = 792;
   const margin = 48;
 
 
-    const heading = await renderTextAsPng('📑 เอกสารการสมัครเรียน', { widthPx: 700, fontSize: 30, bold: true });
+  const heading = await renderTextAsPng('📑 เอกสารการสมัครเรียน', { widthPx: 700, fontSize: 30, bold: true });
   const headingImg = await finalDoc.embedPng(heading.dataUrl);
   const headingDispW = Math.min(pageWidth - margin * 2, heading.width / 2);
   const headingDispH = headingDispW * (heading.height / heading.width);
@@ -291,7 +291,7 @@ async function generateApplicationPdfFromDocx(app, yearBE, photo, doc1, doc2) {
   const filledArrayBuffer = doc.getZip().generate({ type: 'arraybuffer' });
 
 
-    const container = document.createElement('div');
+  const container = document.createElement('div');
   container.id = 'docx-pdf-render-' + Date.now();
   container.style.position = 'fixed';
   container.style.left = '-9999px';
@@ -301,7 +301,7 @@ async function generateApplicationPdfFromDocx(app, yearBE, photo, doc1, doc2) {
   document.body.appendChild(container);
 
 
-    const forceFontStyle = document.createElement('style');
+  const forceFontStyle = document.createElement('style');
   forceFontStyle.textContent = `#${container.id}, #${container.id} * { font-family: 'Sarabun', 'TH Sarabun New', sans-serif !important; }`;
   document.head.appendChild(forceFontStyle);
 
@@ -316,7 +316,7 @@ async function generateApplicationPdfFromDocx(app, yearBE, photo, doc1, doc2) {
     else if (typeof photo === 'string') photoDataUrl = photo;
     if (photoDataUrl) await insertPhotoAtPlaceholder(container, photoDataUrl);
 
-    await new Promise((r) => setTimeout(r, 150)); 
+    await new Promise((r) => setTimeout(r, 150));
 
     const pageEls = container.querySelectorAll(':scope > .docx');
     const { jsPDF } = window.jspdf;
@@ -339,7 +339,7 @@ async function generateApplicationPdfFromDocx(app, yearBE, photo, doc1, doc2) {
   }
 
 
-    const attachments = [
+  const attachments = [
     { label: 'สำเนาบัตรประชาชน', file: doc1 || null },
     { label: 'สำเนาทะเบียนบ้าน', file: doc2 || null },
   ];
