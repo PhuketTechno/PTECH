@@ -223,9 +223,16 @@
     hideLoader();
 
     const qsId = new URLSearchParams(window.location.search).get('id');
-    if (qsId) {
+    const qsUid = new URLSearchParams(window.location.search).get('uid');
+    if (qsId || qsUid) {
       showLoader('กำลังโหลดข้อมูล...');
-      const { data: qsApp, error: qsError } = await sb.from('applications').select('*').eq('id', qsId).single();
+      let req = sb.from('applications').select('*');
+      if (qsUid) {
+        req = req.eq('uid', qsUid.toLowerCase());
+      } else {
+        req = req.eq('id', qsId);
+      }
+      const { data: qsApp, error: qsError } = await req.single();
       hideLoader();
       if (!qsError && qsApp) {
         document.getElementById('success-docno').textContent = qsApp.doc_no || '-';
@@ -1040,6 +1047,21 @@
       }
 
       const app = data.data;
+
+      showLoader('กำลังสร้างลิงก์รายละเอียดส่วนตัว...');
+      try {
+        const { data: uidData, error: uidError } = await sb.functions.invoke('generate-uid', {
+          body: { appId: app.id }
+        });
+
+        if (uidError) throw uidError;
+        if (uidData && uidData.error) throw new Error(uidData.error);
+        if (uidData && uidData.uid) {
+          app.uid = uidData.uid;
+        }
+      } catch (err) {
+        console.warn('ไม่สามารถสร้าง UID ได้ (ระบบจะใช้แบบเก่าสำรองไว้):', err);
+      }
 
       showLoader('กำลังสร้างไฟล์ใบสมัคร PDF...');
       const pdfUrl = await buildAndUploadPdf(app, files.photo, files.doc1, files.doc2);
