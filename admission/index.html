@@ -66,18 +66,13 @@
 
 
     <header
-      class="hero position-relative d-flex align-items-center justify-content-start rounded-4 mt-2 mb-5 shadow-lg mx-2 mx-lg-0"
-      style="background-color: #0b2545; min-height: 280px; overflow: hidden;">
+      class="hero position-relative d-flex hero-layout-responsive justify-content-start rounded-4 mt-2 mb-5 shadow-lg mx-2 mx-lg-0 main-hero-section">
 
+      <div id="hero-dynamic-bg" class="position-absolute top-0 start-0 w-100 h-100 rounded-4 hero-bg-layer"></div>
 
-      <div id="hero-dynamic-bg" class="position-absolute top-0 start-0 w-100 h-100 rounded-4"
-        style="z-index: 0; background-size: cover; background-position: top right; background-repeat: no-repeat;"></div>
+      <div class="position-absolute top-0 start-0 w-100 h-100 hero-overlay-layer rounded-4"></div>
 
-      <div class="position-absolute top-0 start-0 w-100 h-100 hero-overlay rounded-4"
-        style="background: linear-gradient(45deg, #0b2545 0%, rgb(11 37 69 / 66%) 40%, rgb(11 37 69 / 0%) 65%, #00000000 100%); z-index: 1;">
-      </div>
-
-      <div class="container position-relative py-5 px-4 px-lg-5" style="z-index: 2;">
+      <div class="container position-relative py-5 px-4 px-lg-5 hero-content-layer">
         <div class="row w-100 mx-0">
           <div class="col-xl-7 col-lg-8 text-white text-start px-0">
 
@@ -87,28 +82,27 @@
               <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold">Admission</span>
               <span class="fs-6 fw-medium text-white"><span id="hero-year">2570</span></span>
             </div>
-            <h2 class="fs-1 fw-normal mb-3 text-warning fw-bolder" id="hero-school-name">วิทยาลัย</h2>
+            <h2 class="fs-1 fw-normal mb-3 text-warning fw-bolder hero-school-name-text" id="hero-school-name">วิทยาลัย
+            </h2>
 
-            <h1 class="display-4 fw-bolder mb-3"
-              style="font-family: var(--font-display); letter-spacing: -1px; text-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <h1 class="display-4 fw-bolder mb-3 hero-title-text"
+              style="font-family: var(--font-display); letter-spacing: -1px;">
               รับสมัครนักศึกษา
             </h1>
 
-            <p class="fs-6 mb-5 fw-light lh-base fst-italic" style="max-width: 500px; color: #DCEAFB;">
-              หลักสูตรคุณภาพ สร้างทักษะอาชีพ สู่อนาคตที่มั้นคง <br>พร้อมดูแลนักศึกษา
+            <p class="fs-6 mb-5 fw-light lh-base fst-italic hero-subtitle-text">
+              หลักสูตรคุณภาพ สร้างทักษะอาชีพ สู่อนาคตที่มั่นคง <br>พร้อมดูแลนักศึกษา
             </p>
 
-            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-start">
+            <div class="d-flex flex-column flex-sm-row gap-3 justify-content-start hero-action-buttons">
               <a href="apply.html"
-                class="btn btn-warning rounded-pill px-4 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center"
-                style="color: #0D3B66; font-size: 1.05rem; transition: transform 0.2s, box-shadow 0.2s;"
+                class="btn btn-warning rounded-pill px-4 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center btn-primary-hero"
                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)'"
                 onmouseout="this.style.transform='none'; this.style.boxShadow='var(--bs-box-shadow-sm)'">
                 สมัครเรียนทางออนไลน์ <i class="bi bi-arrow-right ms-2 fs-5"></i>
               </a>
               <a href="#video-section"
-                class="btn btn-outline-light rounded-pill px-4 py-3 fw-medium d-flex align-items-center justify-content-center"
-                style="font-size: 1.05rem; transition: background 0.2s;"
+                class="btn btn-outline-light rounded-pill px-4 py-3 fw-medium d-flex align-items-center justify-content-center btn-secondary-hero"
                 onmouseover="this.style.background='rgba(255,255,255,0.1)';"
                 onmouseout="this.style.background='transparent';">
                 <i class="bi bi-play-circle-fill fs-4 me-2"></i> วิดีโอแนะนำการสมัคร
