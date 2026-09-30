@@ -1058,9 +1058,13 @@
         if (uidData && uidData.error) throw new Error(uidData.error);
         if (uidData && uidData.uid) {
           app.uid = uidData.uid;
+        } else {
+          throw new Error('ไม่พบข้อมูล UID ใน response');
         }
       } catch (err) {
-        console.warn('ไม่สามารถสร้าง UID ได้ (ระบบจะใช้แบบเก่าสำรองไว้):', err);
+        console.error('UID Generation Error:', err);
+        showToast('แจ้งเตือน (แอดมิน): การสร้าง UID ล้มเหลว กรุณาตรวจสอบ Edge Function - ' + (err.message || String(err)), 'danger');
+        // เรายังคงปล่อยให้ทำงานต่อ แต่จะไม่ระบุ uid (fallback ไปใช้ id แทน)
       }
 
       showLoader('กำลังสร้างไฟล์ใบสมัคร PDF...');
