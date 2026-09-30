@@ -1048,7 +1048,7 @@
 
       const app = data.data;
 
-      showLoader('กำลังสร้างลิงก์รายละเอียดส่วนตัว...');
+      // showLoader('กำลังสร้างลิงก์รายละเอียดส่วนตัว...');
       try {
         const { data: uidData, error: uidError } = await sb.functions.invoke('generate-uid', {
           body: { appId: app.id }
