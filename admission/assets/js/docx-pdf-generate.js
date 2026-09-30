@@ -1,5 +1,12 @@
 
-const DOCX_TEMPLATE_URL = 'assets/templates/application-template.docx';
+let DOCX_TEMPLATE_URL = 'assets/templates/application-template.docx';
+const scripts = document.getElementsByTagName('script');
+for (let i = 0; i < scripts.length; i++) {
+  if (scripts[i].src.includes('docx-pdf-generate.js')) {
+    DOCX_TEMPLATE_URL = scripts[i].src.replace('js/docx-pdf-generate.js', 'templates/application-template.docx');
+    break;
+  }
+}
 
 const THAI_MONTHS = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
