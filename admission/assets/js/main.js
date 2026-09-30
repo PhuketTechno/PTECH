@@ -1,6 +1,6 @@
-﻿(function () {
+(function () {
 
-    document.getElementById('pvc-list').innerHTML = skeletonBranchChips(5);
+  document.getElementById('pvc-list').innerHTML = skeletonBranchChips(5);
   document.getElementById('pvs-list').innerHTML = skeletonBranchChips(5);
   if (document.getElementById('pvc-promo')) {
     document.getElementById('pvc-promo').innerHTML = skeletonPromoCard();
@@ -15,23 +15,23 @@
   }
 
 
-    setupCharacterScrollIn();
+  setupCharacterScrollIn();
 
 
-    setupNavbarScroll();
+  setupNavbarScroll();
 
 
-    setupSectionReveal();
+  setupSectionReveal();
 
 
-    Promise.allSettled([
+  Promise.allSettled([
     loadSiteConfig(),
     loadPromotionsSection(),
     loadFooterLinks(),
     loadBranchesSection(),
   ]);
 
-    function setupCharacterScrollIn() {
+  function setupCharacterScrollIn() {
     const characterEls = document.querySelectorAll('.level-character');
     if (!characterEls.length) return;
     if ('IntersectionObserver' in window) {
@@ -49,7 +49,7 @@
     }
   }
 
-    async function loadSiteConfig() {
+  async function loadSiteConfig() {
     try {
       const cfg = await fetchConfig();
 
@@ -106,7 +106,7 @@
         }
       } else {
 
-                logoEl.src = toDriveImgSrc('1hQmJz3B281BiRsrDluYP7HVpabqNPhqF');
+        logoEl.src = toDriveImgSrc('1hQmJz3B281BiRsrDluYP7HVpabqNPhqF');
         logoEl.classList.remove('d-none');
         if (footerLogo) {
           footerLogo.src = toDriveImgSrc('1hQmJz3B281BiRsrDluYP7HVpabqNPhqF');
@@ -119,18 +119,27 @@
         const heroBg = document.getElementById('hero-dynamic-bg');
         if (heroBg) {
           heroBg.style.backgroundImage = `url('${toDriveImgSrc(cfg.hero_image)}')`;
-
-                    const animDirs = ['left', 'right', 'top', 'bottom', 'zoom'];
+          const animDirs = ['left', 'right', 'top', 'bottom', 'zoom'];
           const dir = animDirs[Math.floor(Math.random() * animDirs.length)];
           heroBg.classList.add('hero-bg-anim-' + dir);
         } else {
-
-                    const hero = document.querySelector('header.hero');
+          const hero = document.querySelector('header.hero');
           if (hero) {
             hero.style.backgroundImage = `url('${toDriveImgSrc(cfg.hero_image)}')`;
             hero.style.backgroundSize = 'cover';
             hero.style.backgroundPosition = 'top right';
           }
+        }
+      }
+
+      const mobileHeroImageSrc = cfg.hero_image_mobile ? cfg.hero_image_mobile : cfg.hero_image;
+      if (mobileHeroImageSrc) {
+        const heroBgMobile = document.getElementById('hero-dynamic-bg-mobile');
+        if (heroBgMobile) {
+          heroBgMobile.style.backgroundImage = `url('${toDriveImgSrc(mobileHeroImageSrc)}')`;
+          const animDirs = ['left', 'right', 'top', 'bottom', 'zoom'];
+          const dir = animDirs[Math.floor(Math.random() * animDirs.length)];
+          heroBgMobile.classList.add('hero-bg-anim-' + dir);
         }
       }
       setCardVisual('pvc-head-visual', 'pvc-head-icon', toDriveImgSrc(cfg.pvc_card_image));
@@ -181,7 +190,7 @@
       if (icon) icon.style.display = 'none';
 
 
-            const dirs = ['left', 'right', 'bottom', 'top'];
+      const dirs = ['left', 'right', 'bottom', 'top'];
       const rand = dirs[Math.floor(Math.random() * dirs.length)];
       visual.dataset.animDir = rand;
       visual.classList.add('char-anim-' + rand);
@@ -192,7 +201,7 @@
     }
   }
 
-    async function loadPromotionsSection() {
+  async function loadPromotionsSection() {
     try {
       const promos = await fetchPromotions();
       const activePromos = promos.filter(p => p.enabled && p.description);
@@ -382,7 +391,7 @@
     return `https://lh3.googleusercontent.com/d/${urlOrId}`;
   }
 
-    function setupNavbarScroll() {
+  function setupNavbarScroll() {
     const nav = document.querySelector('.landing-nav');
     if (!nav) return;
     const onScroll = () => {
