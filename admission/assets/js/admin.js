@@ -496,7 +496,7 @@
     const footer = document.getElementById('appModalFooter');
     footer.innerHTML = `
       <div class="d-flex gap-2 me-auto">
-        <a href="../apply.html?id=${app.id}" target="_blank" class="btn btn-outline-primary">
+        <a href="../apply.html?${app.uid ? `uid=${app.uid}` : `id=${app.id}`}" target="_blank" class="btn btn-outline-primary">
           <i class="bi bi-box-arrow-up-right me-1"></i> หน้ารายละเอียดผู้สมัคร
         </a>
         <button type="button" class="btn btn-outline-secondary" id="btnCopyDirectLink" title="คัดลอกลิงก์">
@@ -507,7 +507,7 @@
     `;
 
     document.getElementById('btnCopyDirectLink').addEventListener('click', () => {
-      const fullUrl = new URL(`../apply.html?id=${app.id}`, window.location.href).href;
+      const fullUrl = new URL(`../apply.html?${app.uid ? `uid=${app.uid}` : `id=${app.id}`}`, window.location.href).href;
       navigator.clipboard.writeText(fullUrl).then(() => {
         if (typeof showToast === 'function') {
           showToast('คัดลอกลิงก์สำเร็จ', 'success');
