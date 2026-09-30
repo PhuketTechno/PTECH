@@ -494,7 +494,12 @@
     }
 
     const footer = document.getElementById('appModalFooter');
-    footer.innerHTML = `<button class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิดหน้าต่าง</button>`;
+    footer.innerHTML = `
+      <a href="../apply.html?id=${app.id}" target="_blank" class="btn btn-outline-primary me-auto">
+        <i class="bi bi-box-arrow-up-right me-1"></i> หน้ารายละเอียดผู้สมัคร
+      </a>
+      <button class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
+    `;
 
     body.querySelectorAll('.delete-slip-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
