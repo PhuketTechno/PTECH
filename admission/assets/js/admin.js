@@ -495,11 +495,31 @@
 
     const footer = document.getElementById('appModalFooter');
     footer.innerHTML = `
-      <a href="../apply.html?id=${app.id}" target="_blank" class="btn btn-outline-primary me-auto">
-        <i class="bi bi-box-arrow-up-right me-1"></i> หน้ารายละเอียดผู้สมัคร
-      </a>
+      <div class="d-flex gap-2 me-auto">
+        <a href="../apply.html?id=${app.id}" target="_blank" class="btn btn-outline-primary">
+          <i class="bi bi-box-arrow-up-right me-1"></i> หน้ารายละเอียดผู้สมัคร
+        </a>
+        <button type="button" class="btn btn-outline-secondary" id="btnCopyDirectLink" title="คัดลอกลิงก์">
+          <i class="bi bi-copy"></i>
+        </button>
+      </div>
       <button class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
     `;
+
+    document.getElementById('btnCopyDirectLink').addEventListener('click', () => {
+      const fullUrl = new URL(`../apply.html?id=${app.id}`, window.location.href).href;
+      navigator.clipboard.writeText(fullUrl).then(() => {
+        if (typeof showToast === 'function') {
+          showToast('คัดลอกลิงก์สำเร็จ', 'success');
+        } else {
+          alert('คัดลอกลิงก์สำเร็จ');
+        }
+      }).catch(err => {
+        if (typeof showToast === 'function') {
+          showToast('ไม่สามารถคัดลอกลิงก์ได้', 'danger');
+        }
+      });
+    });
 
     body.querySelectorAll('.delete-slip-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -864,7 +884,7 @@
           ctx.fillStyle = '#000000';
           ctx.font = 'bold 52px Sarabun, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(`ชื่อ-นามสกุล: ${app.prefix}${app.name} ${app.lastname}`, width / 2, 1880);
+          ctx.fillText(`ชื่อ - นามสกุล: ${app.prefix}${app.name} ${app.lastname}`, width / 2, 1880);
           ctx.fillText(`ระดับ: ${app.level}     สาขา: ${app.branch}`, width / 2, 1960);
 
           canvases.push(canvas.toDataURL('image/jpeg', 0.95));
