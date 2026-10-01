@@ -227,9 +227,9 @@
               <div class="d-flex flex-column flex-sm-row gap-3 align-items-start">
                 ${p.image_url ? `
                 <div class="flex-shrink-0 shadow-sm rounded-3 overflow-hidden bg-white" style="width: 140px; height: 140px;">
-                  <img src="${toDriveImgSrc(p.image_url)}" class="w-100 h-100 promo-img-card" 
+                  <img src="${escapeHtml(toDriveImgSrc(p.image_url))}" class="w-100 h-100 promo-img-card" 
                        alt="โปรโมชั่น" role="button" title="คลิกเพื่อดูรูปขนาดเต็ม" 
-                       data-bs-toggle="modal" data-bs-target="#imgPreviewModal" data-src="${toDriveImgSrc(p.image_url)}"
+                       data-bs-toggle="modal" data-bs-target="#imgPreviewModal" data-src="${escapeHtml(toDriveImgSrc(p.image_url))}"
                        style="cursor:zoom-in; object-fit: cover; transition: transform 0.2s;">
                 </div>
                 ` : ''}
@@ -308,8 +308,8 @@
     try {
       const links = await fetchSocialLinks();
       linkHost.innerHTML = links.map(l => `
-        <a href="${l.url}" target="_blank" rel="noopener" class="btn btn-outline-light rounded-pill btn-sm me-2 mb-2">
-          <i class="bi ${l.icon || 'bi-link-45deg'} me-1"></i>${escapeHtml(l.label)}
+        <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" class="btn btn-outline-light rounded-pill btn-sm me-2 mb-2">
+          <i class="bi ${escapeHtml(l.icon) || 'bi-link-45deg'} me-1"></i>${escapeHtml(l.label)}
         </a>`).join('');
     } catch (err) {
       console.error('loadFooterLinks failed:', err);
