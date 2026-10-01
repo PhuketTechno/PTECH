@@ -216,8 +216,8 @@
     const linkHost = document.getElementById('footer-links');
     if (linkHost) {
       linkHost.innerHTML = links.map(l => `
-        <a href="${l.url}" target="_blank" rel="noopener" class="btn btn-outline-light rounded-pill btn-sm me-2 mb-2">
-          <i class="bi ${l.icon || 'bi-link-45deg'} me-1"></i>${l.label}
+        <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" class="btn btn-outline-light rounded-pill btn-sm me-2 mb-2">
+          <i class="bi ${escapeHtml(l.icon) || 'bi-link-45deg'} me-1"></i>${escapeHtml(l.label)}
         </a>`).join('');
     }
     hideLoader();
@@ -226,13 +226,10 @@
     const qsUid = new URLSearchParams(window.location.search).get('uid');
     if (qsId || qsUid) {
       showLoader('กำลังโหลดข้อมูล...');
-      let req = sb.from('applications').select('*');
-      if (qsUid) {
-        req = req.eq('uid', qsUid.toLowerCase());
-      } else {
-        req = req.eq('id', qsId);
-      }
-      const { data: qsApp, error: qsError } = await req.single();
+      const { data: qsApp, error: qsError } = await sb.rpc('get_application_info', {
+        p_id: qsId || null,
+        p_uid: qsUid ? qsUid.toLowerCase() : null
+      }).single();
       hideLoader();
       if (!qsError && qsApp) {
         document.getElementById('success-docno').textContent = qsApp.doc_no || '-';
@@ -364,15 +361,15 @@
       ? `<div class="mt-4 mb-3">
            <h6 class="text-brand fw-bold mb-3"><i class="bi bi-tags-fill me-2"></i>ส่วนลดและโปรโมชั่นพิเศษ!</h6>
            ${promos.map(p => {
-        let desc = (p.description || '').replace(/\\n|\n/g, '<br>');
+        let desc = escapeHtml(p.description || '').replace(/\\n|\n/g, '<br>');
         desc = desc.replace(/\s+-\s+(?=[a-zA-Zก-๙])/g, '<br><span class="text-danger ms-2 me-1">-</span>');
         return `
              <div class="card border-0 shadow-sm mb-3" style="background:#fff4f4; border: 1px solid #ffcccc !important;">
                <div class="row g-0 align-items-center">
-                 ${p.image_url ? `<div class="col-4 col-sm-3 p-2"><img src="${toDriveImgSrc(p.image_url)}" class="img-fluid rounded shadow-sm object-fit-cover promo-payment-zoomable" alt="Promo" role="button" title="คลิกเพื่อดูรูปขนาดเต็ม" style="cursor:zoom-in; transition:transform .2s;"></div>` : ''}
+                 ${p.image_url ? `<div class="col-4 col-sm-3 p-2"><img src="${escapeHtml(toDriveImgSrc(p.image_url))}" class="img-fluid rounded shadow-sm object-fit-cover promo-payment-zoomable" alt="Promo" role="button" title="คลิกเพื่อดูรูปขนาดเต็ม" style="cursor:zoom-in; transition:transform .2s;"></div>` : ''}
                  <div class="${p.image_url ? 'col-8 col-sm-9' : 'col-12'}">
                    <div class="card-body py-3 px-3">
-                     <h6 class="card-title fw-bold text-danger mb-2">${p.title || 'โปรโมชั่น'}</h6>
+                     <h6 class="card-title fw-bold text-danger mb-2">${escapeHtml(p.title) || 'โปรโมชั่น'}</h6>
                      <p class="card-text mb-0 small text-dark fw-medium" style="line-height:1.6">${desc}</p>
                    </div>
                  </div>
@@ -419,9 +416,9 @@
           <div class="d-flex flex-column flex-sm-row align-items-center gap-3 mt-3">
             ${bankHtml}
             <div>
-              <p class="mb-1"><strong>ธนาคาร:</strong> ${cfg.bank_name || '-'}</p>
-              <p class="mb-1"><strong>เลขที่บัญชี:</strong> <span class="fs-5 text-primary fw-bold">${cfg.bank_account_no || '-'}</span></p>
-              <p class="mb-0"><strong>ชื่อบัญชี:</strong> ${cfg.bank_account_name || '-'}</p>
+              <p class="mb-1"><strong>ธนาคาร:</strong> ${escapeHtml(cfg.bank_name) || '-'}</p>
+              <p class="mb-1"><strong>เลขที่บัญชี:</strong> <span class="fs-5 text-primary fw-bold">${escapeHtml(cfg.bank_account_no) || '-'}</span></p>
+              <p class="mb-0"><strong>ชื่อบัญชี:</strong> ${escapeHtml(cfg.bank_account_name) || '-'}</p>
             </div>
           </div>
         </div>
@@ -619,14 +616,14 @@
     const box = document.getElementById('level_promo_box');
     const list = (promosByLevel[level] || []).filter(p => p.enabled && p.description);
     box.innerHTML = list.map(p => {
-      let desc = (p.description || '').replace(/\\n|\n/g, '<br>');
+      let desc = escapeHtml(p.description || '').replace(/\\n|\n/g, '<br>');
       desc = desc.replace(/\s+-\s+(?=[a-zA-Zก-๙])/g, '<br><span class="text-danger ms-2 me-1">-</span>');
       return `
       <div class="promo-banner mb-2">
-        <span class="promo-badge">โปรโมชั่น ${level}</span>
-        ${p.title ? `<h6 class="mt-2 mb-1">${p.title}</h6>` : ''}
+        <span class="promo-badge">โปรโมชั่น ${escapeHtml(level)}</span>
+        ${p.title ? `<h6 class="mt-2 mb-1">${escapeHtml(p.title)}</h6>` : ''}
         <div class="row g-2 align-items-center">
-          ${p.image_url ? `<div class="col-3"><img src="${toDriveImgSrc(p.image_url)}" class="img-fluid rounded-3 promo-img-zoomable" alt="promo" role="button" title="คลิกเพื่อดูรูปขนาดเต็ม" style="cursor:zoom-in; transition:transform .2s;"></div>` : ''}
+          ${p.image_url ? `<div class="col-3"><img src="${escapeHtml(toDriveImgSrc(p.image_url))}" class="img-fluid rounded-3 promo-img-zoomable" alt="promo" role="button" title="คลิกเพื่อดูรูปขนาดเต็ม" style="cursor:zoom-in; transition:transform .2s;"></div>` : ''}
           <div class="${p.image_url ? 'col-9' : 'col-12'}"><p class="mb-0" style="white-space:pre-line">${desc}</p></div>
         </div>
       </div>`;
@@ -1150,6 +1147,10 @@
     }
     if (!fileId) throw lastErr || new Error("Upload failed after 3 retries");
     return fileId;
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 })();
 
