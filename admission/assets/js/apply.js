@@ -1032,8 +1032,39 @@
       if (files.doc1) pendingPayload.file2 = await uploadFile(files.doc1, `${idcard}/doc1`);
       if (files.doc2) pendingPayload.file3 = await uploadFile(files.doc2, `${idcard}/doc2`);
 
+      showLoader('ตรวจสอบความปลอดภัยหน้าเว็บ (reCAPTCHA)...');
+      let recaptchaToken = '';
+      if (typeof grecaptcha !== 'undefined') {
+        try {
+          recaptchaToken = await grecaptcha.execute('REPLACE_WITH_YOUR_RECAPTCHA_SITE_KEY', { action: 'submit_application' });
+        } catch (e) {
+          console.warn('reCAPTCHA execute failed:', e);
+        }
+      }
+
       showLoader('กำลังบันทึกใบสมัคร...');
-      const { data, error } = await sb.rpc('submit_application', { p: pendingPayload });
+      let data, error;
+
+      if (recaptchaToken) {
+        // ส่งยิงผ่าน Edge Function ที่มีระบบป้องกัน Bot 
+        const res = await sb.functions.invoke('submit-application', {
+          body: { token: recaptchaToken, p: pendingPayload }
+        });
+
+        if (res.error) {
+          error = res.error;
+        } else if (res.data && res.data.error) {
+          error = new Error(res.data.error);
+        } else {
+          data = res.data?.data;
+        }
+      } else {
+        // Fallback กรณีที่ยังไม่ได้เปลี่ยน Site Key หรือ Google โหลดไม่ขึ้น เพื่อให้ระบบยังรับสมัครได้
+        const rpcRes = await sb.rpc('submit_application', { p: pendingPayload });
+        data = rpcRes.data;
+        error = rpcRes.error;
+      }
+
       if (error) throw error;
 
       if (data.result === 'exists') {
