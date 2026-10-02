@@ -151,12 +151,6 @@
     }
   }
 
-  function extractYouTubeId(urlOrId) {
-    if (!urlOrId) return '';
-    if (urlOrId.length === 11 && !urlOrId.includes('/')) return urlOrId;
-    const match = urlOrId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^"&?\/\s]{11})/);
-    return match ? match[1] : urlOrId;
-  }
 
   function setupVideoSection(youtubeIdRaw) {
     const section = document.getElementById('video-section');
@@ -379,16 +373,6 @@
         </div>
       </div>
     `).join('');
-  }
-
-  function escapeHtml(s) {
-    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
-
-  function toDriveImgSrc(urlOrId) {
-    if (!urlOrId) return '';
-    if (urlOrId.startsWith('http')) return urlOrId;
-    return `https://lh3.googleusercontent.com/d/${urlOrId}`;
   }
 
   function setupNavbarScroll() {
