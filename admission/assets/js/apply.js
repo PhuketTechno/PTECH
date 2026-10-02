@@ -274,14 +274,39 @@
     const cid = cidInput.value.trim();
     if (!checkCtzID(cid)) {
       cidInput.classList.add('is-invalid');
-      showToast('เลขประจำตัวประชาชนไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง', 'danger');
+      if (typeof showToast === 'function') showToast('เลขประจำตัวประชาชนไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง', 'danger');
       return;
     }
 
     showLoader('กำลังตรวจสอบข้อมูล...');
-    const { data, error } = await sb.rpc('find_application_by_idcard', { p_idcard: cid });
+
+    // ดึง token ของ reCAPTCHA เพื่อป้องกัน Bot สุ่มยิงเลขประชาชน (Brute-force)
+    let recaptchaToken = '';
+    if (typeof grecaptcha !== 'undefined') {
+      try {
+        recaptchaToken = await grecaptcha.execute('6LcKuNotAAAAAN3yxsHVEWouqwHbfyHRF5dS_Kz7', { action: 'check_application' });
+      } catch (e) {
+        console.warn('reCAPTCHA check failed:', e);
+      }
+    }
+
+    const { data: resData, error: funcError } = await sb.functions.invoke('check-application', {
+      body: { token: recaptchaToken, cid: cid }
+    });
+
     hideLoader();
-    if (error) { showToast('เกิดข้อผิดพลาด: ' + error.message, 'danger'); return; }
+
+    if (funcError) {
+      if (typeof showToast === 'function') showToast('เกิดข้อผิดพลาด: ' + funcError.message, 'danger');
+      return;
+    }
+
+    if (resData && resData.error) {
+      if (typeof showToast === 'function') showToast(resData.error, 'danger');
+      return;
+    }
+
+    const data = resData.data;
 
     if (data && data.length > 0) {
       renderExisting(data[0]);
