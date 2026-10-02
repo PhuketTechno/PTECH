@@ -301,7 +301,7 @@
     dl.innerHTML = summaryRow('เลขที่ใบสมัคร', app.doc_no) +
       summaryRow('ระดับ/สาขา', `${app.level} ${app.branch}`) +
       summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`) +
-      summaryRow('เบอร์โทร', app.student_phone) +
+      summaryRow('เบอร์โทร', app.student_phone ? app.student_phone.replace(/(\d{3})\d{4}(\d{3})/, '$1XXXX$2') : '-') +
       summaryRow('สถานะ', statusLabel(app.status));
 
     const link = document.getElementById('existing-pdf-link');
