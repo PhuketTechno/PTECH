@@ -14,9 +14,12 @@ function showToast(message, variant = 'primary') {
   el.setAttribute('role', 'alert');
   el.innerHTML = `
     <div class="d-flex">
-      <div class="toast-body">${message}</div>
+      <div class="toast-body" id="__toast_msg"></div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
     </div>`;
+  // ใช้ textContent แทน innerHTML เพื่อป้องกัน XSS จาก error message ที่อาจมี HTML แฝง
+  el.querySelector('#__toast_msg').textContent = message;
+  el.querySelector('#__toast_msg').removeAttribute('id');
   host.appendChild(el);
   const toast = new bootstrap.Toast(el, { delay: 4500 });
   toast.show();
