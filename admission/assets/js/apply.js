@@ -82,12 +82,6 @@
     daySel.addEventListener('change', updateHidden);
   }
 
-  function toDriveImgSrc(urlOrId) {
-    if (!urlOrId) return '';
-    if (urlOrId.startsWith('http')) return urlOrId;
-    return `https://lh3.googleusercontent.com/d/${urlOrId}`;
-  }
-
   async function init() {
     showLoader('กำลังตรวจสอบสถานะระบบ...');
     const promoContainer = document.getElementById('promo_container');
@@ -169,13 +163,6 @@
     if (cfg.favicon_url) {
       const fav = document.getElementById('favicon');
       if (fav) fav.href = toDriveImgSrc(cfg.favicon_url);
-    }
-
-    function extractYouTubeId(urlOrId) {
-      if (!urlOrId) return '';
-      if (urlOrId.length === 11 && !urlOrId.includes('/')) return urlOrId;
-      const match = urlOrId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^"&?\/\s]{11})/);
-      return match ? match[1] : urlOrId;
     }
 
 
@@ -579,38 +566,6 @@
       btn.disabled = false;
       btn.innerHTML = originalHtml;
     }
-  }
-
-
-  function toViewDriveUrl(fileId) {
-    if (!fileId) return '';
-    return `https://drive.google.com/file/d/${fileId}/view`;
-  }
-
-  async function fetchAsBlobSafe(fileIdOrUrl) {
-    if (!fileIdOrUrl) return null;
-    let fileId = fileIdOrUrl.trim();
-    const driveMatch = fileId.match(/(?:(?:\/d\/)|(?:[?&]id=))([a-zA-Z0-9_-]{25,})/);
-    if (driveMatch && driveMatch[1]) {
-      fileId = driveMatch[1];
-    }
-
-    try {
-      const { data, error } = await sb.functions.invoke('fetch-file', {
-        body: { mode: 'fetch_file', fileId: fileId },
-      });
-      if (!error && data && data.base64) {
-        const binaryStr = atob(data.base64);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-        return new Blob([bytes], { type: data.mimeType || 'application/octet-stream' });
-      }
-      if (data && data.error) console.warn('fetchAsBlobSafe: Edge Function returned logic error →', data.error);
-      if (error) console.warn('fetchAsBlobSafe: Edge Function fetch-file error →', error);
-    } catch (e) {
-      console.warn('fetchAsBlobSafe ล้มเหลว →', e.message);
-    }
-    return null;
   }
 
   async function buildAndUploadPdf(app, photo, doc1, doc2) {
@@ -1203,10 +1158,6 @@
     }
     if (!fileId) throw lastErr || new Error("Upload failed after 3 retries");
     return fileId;
-  }
-
-  function escapeHtml(s) {
-    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 })();
 
