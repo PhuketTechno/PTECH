@@ -1036,7 +1036,7 @@
       let recaptchaToken = '';
       if (typeof grecaptcha !== 'undefined') {
         try {
-          recaptchaToken = await grecaptcha.execute('REPLACE_WITH_YOUR_RECAPTCHA_SITE_KEY', { action: 'submit_application' });
+          recaptchaToken = await grecaptcha.execute('6LcKuNotAAAAAN3yxsHVEWouqwHbfyHRF5dS_Kz7', { action: 'submit_application' });
         } catch (e) {
           console.warn('reCAPTCHA execute failed:', e);
         }
