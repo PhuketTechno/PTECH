@@ -937,41 +937,6 @@
     bootstrap.Modal.getOrCreateInstance(document.getElementById('appModal')).show();
   }
 
-  function toViewDriveUrl(fileId) {
-    if (!fileId) return '';
-    return `https://drive.google.com/file/d/${fileId}/view`;
-  }
-
-
-
-  async function fetchAsBlobSafe(fileIdOrUrl) {
-    if (!fileIdOrUrl) return null;
-
-
-
-
-    let fileId = fileIdOrUrl.trim();
-    const driveMatch = fileId.match(/(?:(?:\/d\/)|(?:[?&]id=))([a-zA-Z0-9_-]{25,})/);
-    if (driveMatch) fileId = driveMatch[1];
-
-    try {
-      const { data, error } = await sb.functions.invoke('fetch-file', {
-        body: { mode: 'fetch_file', fileId: fileId },
-      });
-      if (!error && data && data.base64) {
-        const binaryStr = atob(data.base64);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-        return new Blob([bytes], { type: data.mimeType || 'application/octet-stream' });
-      }
-      if (data && data.error) console.warn('fetchAsBlobSafe: Edge Function returned logic error →', data.error);
-      if (error) console.warn('fetchAsBlobSafe: Edge Function fetch-file error →', error);
-    } catch (e) {
-      console.warn('fetchAsBlobSafe ล้มเหลว →', e.message);
-    }
-    return null;
-  }
-
 
 
   async function uploadPdfBytes(bytes, path) {
@@ -1001,12 +966,51 @@
     return fileId;
   }
 
-  async function deleteApplication(id) {
-    if (!confirm('ยืนยันการลบใบสมัครนี้? การลบไม่สามารถย้อนกลับได้')) return;
-    const { error } = await sb.from('applications').delete().eq('id', id);
-    if (error) { showToast(error.message, 'danger'); return; }
-    showToast('ลบใบสมัครแล้ว', 'success');
-    loadApplications(true);
+  let appToDeleteId = null;
+
+  const btnConfirmDelete = document.getElementById('btnConfirmDeleteApp');
+  if (btnConfirmDelete) {
+    btnConfirmDelete.addEventListener('click', async () => {
+      if (!appToDeleteId) return;
+
+      const originalHtml = btnConfirmDelete.innerHTML;
+      btnConfirmDelete.disabled = true;
+      btnConfirmDelete.innerHTML = '<span class="spinner-border spinner-border-sm"></span> กำลังลบ...';
+
+      const { error } = await sb.from('applications').delete().eq('id', appToDeleteId);
+
+      btnConfirmDelete.disabled = false;
+      btnConfirmDelete.innerHTML = originalHtml;
+
+      if (error) {
+        showToast(error.message, 'danger');
+        return;
+      }
+
+      showToast('ลบใบสมัครแล้ว', 'success');
+
+      const modalEl = document.getElementById('confirmDeleteAppModal');
+      if (modalEl) {
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
+      }
+
+      appToDeleteId = null;
+      loadApplications(true);
+    });
+  }
+
+  function deleteApplication(id) {
+    appToDeleteId = id;
+    const modalEl = document.getElementById('confirmDeleteAppModal');
+    if (modalEl) {
+      new bootstrap.Modal(modalEl).show();
+    } else {
+      // Fallback
+      if (confirm('ยืนยันลบใบสมัครนี้?')) {
+        btnConfirmDelete.click();
+      }
+    }
   }
 
   async function loadBranches() {
@@ -1437,10 +1441,6 @@
       if (error) { showToast(error.message, 'danger'); return; }
       showToast('บันทึกการตั้งค่าเรียบร้อย', 'success');
     };
-  }
-
-  function escapeHtml(s) {
-    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 })();
 
