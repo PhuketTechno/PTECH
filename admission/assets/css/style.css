@@ -558,7 +558,7 @@ a:hover {
 }
 
 .card-soft {
-  background: #fff;
+  background: #0a2f5524;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
