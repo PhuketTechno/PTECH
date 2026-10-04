@@ -230,7 +230,7 @@
         document.getElementById('success-summary').innerHTML = [
           summaryRow('สมัครเรียน', `${qsApp.level} ${qsApp.branch}`),
           summaryRow('ชื่อ-นามสกุล', `${qsApp.prefix}${qsApp.name} ${qsApp.lastname}`),
-          summaryRow('สถานะ', statusLabel(qsApp.status)),
+          summaryRow('สถานะ', statusLabel(qsApp.status), true),
         ].join('');
         const pdfStatusError = document.getElementById('pdf-status-error');
         if (pdfStatusError) pdfStatusError.classList.add('d-none');
@@ -314,7 +314,7 @@
       summaryRow('ระดับ/สาขา', `${app.level} ${app.branch}`) +
       summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`) +
       summaryRow('เบอร์โทร', app.student_phone ? app.student_phone.replace(/(\d{3})\d{4}(\d{3})/, '$1XXXX$2') : '-') +
-      summaryRow('สถานะ', statusLabel(app.status));
+      summaryRow('สถานะ', statusLabel(app.status), true);
 
     const link = document.getElementById('existing-pdf-link');
     const retryBtn = document.getElementById('btn-retry-pdf-existing');
@@ -342,8 +342,9 @@
     else if (s === 'rejected') badgeClass = 'bg-danger';
     return `<span class="badge ${badgeClass} fs-6 px-3 py-2 shadow-sm">${text}</span>`;
   }
-  function summaryRow(label, value) {
-    return `<dt class="col-5 text-muted">${escapeHtml(label)}</dt><dd class="col-7">${escapeHtml(value ?? '-')}</dd>`;
+  function summaryRow(label, value, isHtml = false) {
+    const val = isHtml ? (value ?? '-') : escapeHtml(value ?? '-');
+    return `<dt class="col-5 text-muted">${escapeHtml(label)}</dt><dd class="col-7">${val}</dd>`;
   }
 
   function renderPaymentBox(app, targetId) {
@@ -966,7 +967,7 @@
       summaryRow('ที่อยู่', [p.house_no, p.village_no && ('หมู่ ' + p.village_no), p.village, p.district, p.amphoe, p.province, p.zipcode].filter(Boolean).join(' ')),
       summaryRow('ผู้ปกครอง', p.parent || p.father || p.mother || '-'),
       summaryRow('ทราบข้อมูลจาก', p.info_source),
-      summaryRow('เอกสารแนบ', `<div class="d-flex flex-wrap gap-3">${buildAttachmentThumbsHtml()}</div>`),
+      summaryRow('เอกสารแนบ', `<div class="d-flex flex-wrap gap-3">${buildAttachmentThumbsHtml()}</div>`, true),
     ].join('');
 
 
@@ -1117,7 +1118,7 @@
       document.getElementById('success-summary').innerHTML = [
         summaryRow('สมัครเรียน', `${app.level} ${app.branch}`),
         summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`),
-        summaryRow('สถานะ', statusLabel(app.status)),
+        summaryRow('สถานะ', statusLabel(app.status), true),
       ].join('');
       document.getElementById('pdf-status-error').classList.add('d-none');
 
