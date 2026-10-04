@@ -573,8 +573,13 @@
     const levelPrefix = app.level === 'ปวช.' ? 'pvc' : (app.level === 'ปวส.' ? 'pvs' : '');
     const safeDocNo = String(app.doc_no || '').replace(/[^0-9_-]/g, '');
     const pdfUrl = await uploadBytes(pdfBytes, `${app.idcard}/application-${levelPrefix}${safeDocNo}.pdf`, 'application/pdf');
-    const { error } = await sb.rpc('attach_pdf_url', { p_idcard: app.idcard, p_pdf_url: pdfUrl });
-    if (error) throw error;
+    if (app.uid) {
+      const { error } = await sb.rpc('attach_pdf_by_uid', { p_uid: app.uid, p_pdf_url: pdfUrl });
+      if (error) throw error;
+    } else {
+      const { error } = await sb.rpc('attach_pdf_url', { p_idcard: app.idcard, p_pdf_url: pdfUrl });
+      if (error) console.warn('attach_pdf_url fallback used');
+    }
     return pdfUrl;
   }
 
