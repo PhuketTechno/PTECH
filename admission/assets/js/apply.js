@@ -343,7 +343,7 @@
     return `<span class="badge ${badgeClass} fs-6 px-3 py-2 shadow-sm">${text}</span>`;
   }
   function summaryRow(label, value) {
-    return `<dt class="col-5 text-muted">${label}</dt><dd class="col-7">${value ?? '-'}</dd>`;
+    return `<dt class="col-5 text-muted">${escapeHtml(label)}</dt><dd class="col-7">${escapeHtml(value ?? '-')}</dd>`;
   }
 
   function renderPaymentBox(app, targetId) {
