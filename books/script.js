@@ -1,5 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
     const iframe = document.getElementById('gas-iframe');
+    const skeletonLoader = document.getElementById('skeleton-loader');
+
+    // Hide the skeleton loader when the iframe is fully loaded
+    iframe.addEventListener('load', () => {
+        // Only hide if the src is actually set to a remote URL
+        if (iframe.src && iframe.src !== window.location.href && iframe.src !== 'about:blank') {
+            skeletonLoader.style.opacity = '0';
+            setTimeout(() => {
+                skeletonLoader.style.display = 'none';
+            }, 500); // Wait for fade out transition
+        }
+    });
 
     // Fetch the configuration
     fetch('config.json')
