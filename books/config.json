@@ -1,7 +1,7 @@
 {
   "appsScript": {
-    "deploymentId": "AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "baseUrl": "https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec",
+    "deploymentId": "AKfycbylmlkieq_mZNsRj2jZ29MyXPiKdVXXWKdMBjW5NlSCP_00I06EUJEafJrmBYnu5gVt",
+    "baseUrl": "https://script.google.com/macros/s/AKfycbylmlkieq_mZNsRj2jZ29MyXPiKdVXXWKdMBjW5NlSCP_00I06EUJEafJrmBYnu5gVt/exec",
     "timeoutMs": 20000,
     "embed": {
       "enabled": true,
