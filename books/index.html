@@ -1,15 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading...</title> <!-- This gets overwritten by script.js -->
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
+    <!-- Skeleton Loader -->
+    <div id="skeleton-loader" class="skeleton-loader">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-content">
+            <div class="skeleton-sidebar"></div>
+            <div class="skeleton-main">
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+                <div class="skeleton-card"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="iframe-wrapper">
         <iframe id="gas-iframe" src="" frameborder="0" allowfullscreen></iframe>
     </div>
     <script src="script.js"></script>
 </body>
+
 </html>
