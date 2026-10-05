@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apps Script Embed Client</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="head">
+      <h1>Apps Script Runner</h1>
+      <span id="status" class="badge badge--idle">loading config…</span>
+    </header>
+
+    <section class="card">
+      <h2>Actions</h2>
+      <div id="actionBar" class="action-bar"></div>
+      <form id="dynForm" class="dyn-form hidden"></form>
+    </section>
+
+    <section class="card">
+      <h2>Response</h2>
+      <pre id="output" class="output">// results appear here</pre>
+    </section>
+
+    <section class="card" id="embedCard" hidden>
+      <h2>Embedded Web App</h2>
+      <iframe id="gasFrame" class="gas-frame" title="Google Apps Script Web App"
+              sandbox="allow-scripts allow-forms allow-same-origin allow-popups"></iframe>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+{
+  "appsScript": {
+    "deploymentId": "AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "baseUrl": "https://script.google.com/macros/s/AKfycbxXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/exec",
+    "timeoutMs": 20000,
+    "embed": {
+      "enabled": true,
+      "height": 480
+    }
+  },
+  "actions": [
+    {
+      "id": "listRows",
+      "label": "Load Records",
+      "method": "GET",
+      "params": { "sheet": "Data", "limit": 50 }
+    },
+    {
+      "id": "addRow",
+      "label": "Add Record",
+      "method": "POST",
+      "fields": [
+        { "name": "name",  "label": "Name",  "type": "text",   "required": true },
+        { "name": "email", "label": "Email", "type": "email",  "required": true },
+        { "name": "note",  "label": "Note",  "type": "textarea" }
+      ]
+    },
+    {
+      "id": "ping",
+      "label": "Health Check",
+      "method": "GET",
+      "params": {}
+    }
+  ]
+}
