@@ -318,7 +318,7 @@ async function generateApplicationPdfFromDocx(app, yearBE, photo, doc1, doc2) {
       inWrapper: false, ignoreWidth: false, ignoreHeight: false, breakPages: true,
     });
 
-    let photoDataUrl = 'https://placehold.net/avatar-3.svg';
+    let photoDataUrl = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' fill='none'%3E%3Ccircle cx='100' cy='100' r='98' fill='%23DDDFE4' stroke='white' stroke-width='4'/%3E%3Cpath d='M145.538 124.371C126.428 118.129 118.484 110.367 118.484 110.367L117.845 110.977C112.169 116.318 105.893 119.458 100.175 119.458H99.6352C93.9176 119.458 87.641 116.318 81.9659 110.977L81.3259 110.367C81.3259 110.367 73.3828 118.129 54.2724 124.371C26.0621 134.909 32.5244 154.536 32.5162 154.868C33.4047 159.645 34.4026 159.514 34.8347 159.943C49.1386 174.151 69.3816 190.007 100.023 190.585C122.795 191.015 150.492 177.968 165.279 161.746C165.73 161.561 167.628 159.645 168.516 154.868C169.584 149.129 173.862 135.08 145.538 124.371Z' fill='%238997B3'/%3E%3C/svg%3E";
     if (photo instanceof Blob) photoDataUrl = await fileToDataUrl(photo);
     else if (typeof photo === 'string' && photo) photoDataUrl = photo;
     await insertPhotoAtPlaceholder(container, photoDataUrl);
