@@ -318,10 +318,10 @@ async function generateApplicationPdfFromDocx(app, yearBE, photo, doc1, doc2) {
       inWrapper: false, ignoreWidth: false, ignoreHeight: false, breakPages: true,
     });
 
-    let photoDataUrl = null;
+    let photoDataUrl = 'https://placehold.net/avatar-3.svg';
     if (photo instanceof Blob) photoDataUrl = await fileToDataUrl(photo);
-    else if (typeof photo === 'string') photoDataUrl = photo;
-    if (photoDataUrl) await insertPhotoAtPlaceholder(container, photoDataUrl);
+    else if (typeof photo === 'string' && photo) photoDataUrl = photo;
+    await insertPhotoAtPlaceholder(container, photoDataUrl);
 
     await new Promise((r) => setTimeout(r, 150));
 
