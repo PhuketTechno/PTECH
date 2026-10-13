@@ -130,16 +130,18 @@
       <div class="row g-4">
 
 
-        <div class="col-lg-6" id="pvc">
+        <!-- Section ระดับ ปวช. (แนวระนาบ เต็มแถว) -->
+        <div class="col-12 mb-4" id="pvc">
           <div class="card border-0 rounded-4 shadow-sm h-100" style="background: #ffffff; overflow: visible;">
 
+            <!-- Header with Curve & Character -->
             <div class="card-header border-0 p-0 rounded-top-4 position-relative"
               style="background: transparent; overflow: visible;">
               <div class="position-relative rounded-top-4"
                 style="background: linear-gradient(135deg, #0d3b66, #007bff); min-height: 180px;">
 
                 <div class="level-character z-1" id="pvc-head-visual"
-                  style="position: absolute; right: 10px; bottom: 0; width: 170px; height: 220px; background-size: contain; background-position: right bottom; background-repeat: no-repeat;">
+                  style="position: absolute; right: 15px; bottom: 0; margin-right: -10px; width: 170px; height: 220px; background-size: contain; background-position: right bottom; background-repeat: no-repeat;">
                 </div>
 
                 <div class="position-absolute bottom-0 w-100 z-2" style="left: 0; line-height: 0;">
@@ -149,50 +151,85 @@
                   </svg>
                 </div>
 
-                <div class="d-flex align-items-center gap-3 z-3 w-100 h-100 p-4 px-lg-4 pb-4 position-relative">
+                <div class="d-flex align-items-center gap-3 z-3 w-100 h-100 p-4 px-lg-5 pb-4 position-relative">
                   <div
                     class="rounded-circle d-none d-sm-flex align-items-center justify-content-center text-white flex-shrink-0"
                     style="width: 70px; height: 70px; border: 2px solid rgba(255,255,255,0.7); background: transparent;">
                     <i class="bi bi-mortarboard fs-2"></i>
                   </div>
-                  <div class="text-start pe-5 z-1">
-                    <h2 class="fw-bold mb-1 text-white" style="font-size: 2.2rem;">ปวช.</h2>
-                    <p class="text-white opacity-75 small mb-2 fw-medium lh-sm" style="max-width: 200px;">
-                      ระดับประกาศนียบัตรวิชาชีพ<br>(จบ ม.3)</p>
-                    <span class="badge bg-white text-primary rounded-pill px-3 py-1 fw-bold fs-6">เรียน 3 ปี</span>
+                  <div class="text-start pe-5 z-1" style="max-width: 520px;">
+                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                      <h2 class="fw-bold mb-0 text-white" style="font-size: 2.2rem;">ปวช.</h2>
+                      <span class="badge bg-white text-primary rounded-pill px-3 py-1 fw-bold fs-6">เรียน 3 ปี</span>
+                    </div>
+                    <p class="text-white opacity-75 small mb-0 fw-medium lh-sm">
+                      ระดับประกาศนียบัตรวิชาชีพ (จบ ม.3 หรือเทียบเท่า)
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="card-body p-4 px-lg-5 pb-0 branch-wrapper" id="pvc-list"></div>
+            <!-- Card Body: Left = สาขาวิชา Cards & สมัครเรียน, Right = โปรโมชั่น -->
+            <div class="card-body p-4 px-lg-5">
+              <div class="row g-4 align-items-stretch">
+                <!-- ฝั่งซ้าย: สาขาวิชาที่เป็น Card -->
+                <div class="col-lg-7 col-xl-8 d-flex flex-column">
+                  <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <h4 class="fw-bold fs-5 mb-0 d-flex align-items-center gap-2" style="color: #0D3B66 !important;">
+                      <i class="bi bi-grid-3x3-gap-fill text-primary"></i>
+                      สาขาวิชาที่เปิดรับสมัคร
+                    </h4>
+                    <span class="text-muted small">คลิกสมัครเรียนเพื่อเข้าสู่ระบบรับสมัคร</span>
+                  </div>
 
-            <div id="pvc-promo" class="px-4 px-lg-5 pb-3 pt-3"></div>
+                  <div class="branch-card-grid flex-grow-1" id="pvc-list"></div>
 
-            <div class="card-footer border-0 p-4 px-lg-4 bg-transparent pt-0 pb-4 mt-auto">
-              <a href="apply.html?level=pvc"
-                class="btn w-100 rounded-4 py-3 d-flex flex-column align-items-center justify-content-center text-decoration-none shadow"
-                style="background: #007bff; color: #ffffff; border: none; transition: transform 0.2s;"
-                onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'">
-                <span class="d-flex align-items-center fs-5 fw-bold"><i class="bi bi-pencil-square me-2"></i> สมัครเรียน
-                  ปวช.</span>
-                <span class="small opacity-75 mt-1">ก้าวแรกของมืออาชีพ เริ่มต้นได้ที่นี่</span>
-              </a>
+                  <div class="mt-4 pt-2">
+                    <a href="apply.html?level=pvc"
+                      class="btn w-100 rounded-4 py-3 d-flex flex-column flex-sm-row align-items-center justify-content-center text-decoration-none shadow"
+                      style="background: linear-gradient(135deg, #0d3b66, #007bff); color: #ffffff; border: none; transition: transform 0.2s;"
+                      onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                      <span class="d-flex align-items-center fs-5 fw-bold">
+                        <i class="bi bi-pencil-square me-2"></i> สมัครเรียน ปวช.
+                      </span>
+                      <span class="small opacity-75 ms-sm-3 mt-1 mt-sm-0">ก้าวแรกของมืออาชีพ เริ่มต้นได้ที่นี่ <i
+                          class="bi bi-arrow-right ms-1"></i></span>
+                    </a>
+                  </div>
+                </div>
+
+                <!-- ฝั่งขวา: โปรโมชั่นประจำระดับ -->
+                <div class="col-lg-5 col-xl-4">
+                  <div class="h-100 d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                      <h5 class="fw-bold mb-0 d-flex align-items-center gap-2 text-warning-emphasis fs-5">
+                        <i class="bi bi-stars text-warning"></i>
+                        สิทธิพิเศษ & โปรโมชั่น
+                      </h5>
+                    </div>
+                    <div id="pvc-promo" class="flex-grow-1"></div>
+                  </div>
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
 
 
-        <div class="col-lg-6" id="pvs">
+        <!-- Section ระดับ ปวส. (แนวระนาบ เต็มแถว เรียงลงมา) -->
+        <div class="col-12 mb-4" id="pvs">
           <div class="card border-0 rounded-4 shadow-sm h-100" style="background: #ffffff; overflow: visible;">
 
+            <!-- Header with Curve & Character -->
             <div class="card-header border-0 p-0 rounded-top-4 position-relative"
               style="background: transparent; overflow: visible;">
               <div class="position-relative rounded-top-4"
                 style="background: linear-gradient(135deg, #00796b, #00bfa5); min-height: 180px;">
 
                 <div class="level-character z-1" id="pvs-head-visual"
-                  style="position: absolute; right: 10px; bottom: 0; width: 170px; height: 220px; background-size: contain; background-position: right bottom; background-repeat: no-repeat;">
+                  style="position: absolute; right: 15px; bottom: 0; margin-right: -10px; width: 170px; height: 220px; background-size: contain; background-position: right bottom; background-repeat: no-repeat;">
                 </div>
 
                 <div class="position-absolute bottom-0 w-100 z-2" style="left: 0; line-height: 0;">
@@ -202,36 +239,69 @@
                   </svg>
                 </div>
 
-                <div class="d-flex align-items-center gap-3 z-3 w-100 h-100 p-4 px-lg-4 pb-4 position-relative">
+                <div class="d-flex align-items-center gap-3 z-3 w-100 h-100 p-4 px-lg-5 pb-4 position-relative">
                   <div
                     class="rounded-circle d-none d-sm-flex align-items-center justify-content-center text-white flex-shrink-0"
                     style="width: 70px; height: 70px; border: 2px solid rgba(255,255,255,0.7); background: transparent;">
                     <i class="bi bi-mortarboard-fill fs-2"></i>
                   </div>
-                  <div class="text-start pe-5 z-1">
-                    <h2 class="fw-bold mb-1 text-white" style="font-size: 2.2rem;">ปวส.</h2>
-                    <p class="text-white opacity-75 small mb-2 fw-medium lh-sm" style="max-width: 200px;">
-                      ระดับประกาศนียบัตรวิชาชีพชั้นสูง<br>(จบ ม.6 / ปวช.)</p>
-                    <span class="badge bg-white text-success rounded-pill px-3 py-1 fw-bold fs-6">เรียน 2 ปี</span>
+                  <div class="text-start pe-5 z-1" style="max-width: 520px;">
+                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                      <h2 class="fw-bold mb-0 text-white" style="font-size: 2.2rem;">ปวส.</h2>
+                      <span class="badge bg-white text-success rounded-pill px-3 py-1 fw-bold fs-6">เรียน 2 ปี</span>
+                    </div>
+                    <p class="text-white opacity-75 small mb-0 fw-medium lh-sm">
+                      ระดับประกาศนียบัตรวิชาชีพชั้นสูง (จบ ม.6 / ปวช.)
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="card-body p-4 px-lg-5 pb-0 branch-wrapper" id="pvs-list"></div>
+            <!-- Card Body: Left = สาขาวิชา Cards & สมัครเรียน, Right = โปรโมชั่น -->
+            <div class="card-body p-4 px-lg-5">
+              <div class="row g-4 align-items-stretch">
+                <!-- ฝั่งซ้าย: สาขาวิชาที่เป็น Card -->
+                <div class="col-lg-7 col-xl-8 d-flex flex-column">
+                  <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <h4 class="fw-bold fs-5 mb-0 d-flex align-items-center gap-2" style="color: #00796b !important;">
+                      <i class="bi bi-grid-3x3-gap-fill text-success"></i>
+                      สาขาวิชาที่เปิดรับสมัคร
+                    </h4>
+                    <span class="text-muted small">คลิกสมัครเรียนเพื่อเข้าสู่ระบบรับสมัคร</span>
+                  </div>
 
-            <div id="pvs-promo" class="px-4 px-lg-5 pb-3 pt-3"></div>
+                  <div class="branch-card-grid flex-grow-1" id="pvs-list"></div>
 
-            <div class="card-footer border-0 p-4 px-lg-4 bg-transparent pt-0 pb-4 mt-auto">
-              <a href="apply.html?level=pvs"
-                class="btn w-100 rounded-4 py-3 d-flex flex-column align-items-center justify-content-center text-decoration-none shadow"
-                style="background: #009688; color: #ffffff; border: none; transition: transform 0.2s;"
-                onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='none'">
-                <span class="d-flex align-items-center fs-5 fw-bold"><i class="bi bi-pencil-square me-2"></i> สมัครเรียน
-                  ปวส.</span>
-                <span class="small opacity-75 mt-1">สร้างอาชีพ สร้างอนาคต</span>
-              </a>
+                  <div class="mt-4 pt-2">
+                    <a href="apply.html?level=pvs"
+                      class="btn w-100 rounded-4 py-3 d-flex flex-column flex-sm-row align-items-center justify-content-center text-decoration-none shadow"
+                      style="background: linear-gradient(135deg, #00796b, #00bfa5); color: #ffffff; border: none; transition: transform 0.2s;"
+                      onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                      <span class="d-flex align-items-center fs-5 fw-bold">
+                        <i class="bi bi-pencil-square me-2"></i> สมัครเรียน ปวส.
+                      </span>
+                      <span class="small opacity-75 ms-sm-3 mt-1 mt-sm-0">สร้างอาชีพ สร้างอนาคต <i
+                          class="bi bi-arrow-right ms-1"></i></span>
+                    </a>
+                  </div>
+                </div>
+
+                <!-- ฝั่งขวา: โปรโมชั่นประจำระดับ -->
+                <div class="col-lg-5 col-xl-4">
+                  <div class="h-100 d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                      <h5 class="fw-bold mb-0 d-flex align-items-center gap-2 text-warning-emphasis fs-5">
+                        <i class="bi bi-stars text-warning"></i>
+                        สิทธิพิเศษ & โปรโมชั่น
+                      </h5>
+                    </div>
+                    <div id="pvs-promo" class="flex-grow-1"></div>
+                  </div>
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
 
