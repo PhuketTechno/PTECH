@@ -152,14 +152,20 @@ function skeletonBox(width = '100%', height = '0.9em', extraStyle = '') {
 }
 
 
-function skeletonBranchChips(n = 4) {
+function skeletonBranchChips(n = 6) {
   let html = '';
   for (let i = 0; i < n; i++) {
-    html += `<div class="branch-chip">
-      <span class="skeleton skeleton-dot"></span>
-      ${skeletonBox('40%', '0.95em')}
-      <span class="ms-auto">${skeletonBox('64px', '0.95em')}</span>
-    </div>`;
+    html += `
+      <div class="branch-item-card card border-0 rounded-4 p-3 p-sm-4 shadow-sm bg-white position-relative overflow-hidden" style="border: 1.5px solid #E2E8F0 !important; min-height: 135px;">
+        <div class="mb-2">
+          ${skeletonBox('35%', '0.75rem', 'border-radius: 999px; margin-bottom: 0.6rem;')}
+          ${skeletonBox('75%', '1.1rem', 'border-radius: 4px; margin-bottom: 0.4rem;')}
+        </div>
+        <div class="mt-auto pt-3 border-top border-light-subtle d-flex justify-content-between align-items-center">
+          ${skeletonBox('65px', '0.8rem')}
+          ${skeletonBox('80px', '1.05rem')}
+        </div>
+      </div>`;
   }
   return html;
 }
@@ -167,19 +173,18 @@ function skeletonBranchChips(n = 4) {
 
 function skeletonPromoCard() {
   return `
-      <div class="card border-0 shadow-sm mt-3 rounded-4" style="background: #FFFDF8; border: 1px solid #FFE69C !important;">
-        <div class="card-body p-3 p-lg-4">
-          ${skeletonBox('90px', '1.1em', 'margin-bottom:1rem; border-radius:999px;')}
-          <div class="d-flex flex-column flex-sm-row gap-3">
-            <div class="flex-shrink-0">${skeletonBox('140px', '140px', 'border-radius:12px;')}</div>
-            <div class="flex-grow-1 w-100">
-              ${skeletonBox('90%', '1em', 'margin-bottom:0.5rem;')}
-              ${skeletonBox('75%', '0.9em', 'margin-bottom:0.3rem;')}
-              ${skeletonBox('50%', '0.9em')}
-            </div>
-          </div>
+    <div class="card border-0 shadow-sm rounded-4 w-100 h-100" style="background: #FFFDF8; border: 1.5px solid #FFE69C !important; min-height: 250px;">
+      <div class="card-body p-3 p-xl-4 d-flex flex-column">
+        <div class="d-flex justify-content-between mb-3">
+          ${skeletonBox('90px', '1.3em', 'border-radius:999px;')}
+          ${skeletonBox('60px', '1.3em', 'border-radius:999px;')}
         </div>
-      </div>`;
+        ${skeletonBox('100%', '160px', 'border-radius:12px; margin-bottom: 1rem;')}
+        ${skeletonBox('80%', '1.1em', 'margin-bottom:0.5rem;')}
+        ${skeletonBox('95%', '0.9em', 'margin-bottom:0.35rem;')}
+        ${skeletonBox('60%', '0.9em')}
+      </div>
+    </div>`;
 }
 
 
