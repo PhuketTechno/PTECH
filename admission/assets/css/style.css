@@ -8,7 +8,6 @@
   --paper: #F2F6FB;
   --line: #CBDCF0;
   --gold: #E0A421;
-  --ok: #1E8E5A;
   --danger: #C0392B;
 
   --font-display: 'Prompt', 'Sarabun', system-ui, sans-serif;
@@ -30,8 +29,7 @@ h2,
 h3,
 h4,
 h5,
-h6,
-.display-font {
+h6 {
   font-family: var(--font-display);
   letter-spacing: 0.01em;
 }
@@ -137,20 +135,9 @@ a:hover {
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
 }
 
-.hero .eyebrow {
-  color: var(--sky);
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
 .hero h1 {
   font-size: clamp(2rem, 4.2vw, 3.1rem);
   font-weight: 600;
-}
-
-.hero p.lead {
-  color: #DCEAFB;
-  max-width: 46ch;
 }
 
 
@@ -235,54 +222,11 @@ a:hover {
 }
 
 
-.level-card {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
-  position: relative;
-  overflow: visible;
-
-}
-
-.level-card .level-head {
-  background: var(--mist);
-  padding: 1.1rem 1.4rem;
-  border-bottom: 1px solid var(--line);
-  border-radius: var(--radius) var(--radius) 0 0;
-  position: relative;
-}
-
-.level-card .level-head .level-tag {
-  font-family: var(--font-display);
-  font-weight: 600;
-  color: var(--navy);
-  font-size: 1.3rem;
-  position: relative;
-  z-index: 2;
-}
-
-.level-card .level-head .level-sub {
-  color: var(--navy);
-  font-size: 1.18rem;
-  position: relative;
-  z-index: 2;
-}
-
-
-.level-head-icon {
-  position: relative;
-  z-index: 2;
-}
-
-.level-card:has(.level-character[data-has-image="1"]) .level-head-icon {
-  display: none;
-}
-
 .level-character {
   position: absolute;
   bottom: -10px;
   right: -10px;
+  /* margin-right: -20px; */
   width: 120px;
   height: 155px;
   background-size: contain;
@@ -377,67 +321,6 @@ a:hover {
   .level-character[data-has-image="1"].in-view {
     animation: none;
   }
-}
-
-.level-card:has(.level-character[data-has-image="1"]) .level-head {
-  padding-right: 120px;
-}
-
-@media (max-width: 575px) {
-  .level-card:has(.level-character[data-has-image="1"]) .level-head {
-    padding-right: 90px;
-  }
-}
-
-.branch-chip {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.7rem 1rem;
-  border-bottom: 1px dashed var(--line);
-}
-
-.branch-chip:last-child {
-  border-bottom: none;
-}
-
-.branch-chip .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--blue);
-  flex: none;
-}
-
-.branch-chip .name {
-  font-weight: 500;
-}
-
-.branch-chip .track {
-  color: var(--sky);
-  font-size: 0.85rem;
-}
-
-.branch-chip .price {
-  margin-left: auto;
-  color: var(--navy);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.video-embed-wrap {
-  max-width: 860px;
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--line);
-  background: #0B2540;
-}
-
-.video-embed-wrap iframe {
-  border: 0;
-  width: 100%;
-  height: 100%;
 }
 
 .promo-banner {
@@ -557,7 +440,7 @@ a:hover {
 }
 
 .card-soft {
-  background: #779bc024;
+  background: #fff;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
@@ -626,17 +509,6 @@ fieldset.form-section {
   max-height: 140px;
   object-fit: cover;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-}
-
-.file-thumb-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100px;
-  font-size: 2.8rem;
-  color: var(--danger);
-  background: #FEF2F0;
 }
 
 .file-thumb-remove {
@@ -821,52 +693,8 @@ fieldset.form-section legend {
   line-height: 1.2;
 }
 
-.step-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 0.3rem 0.9rem 0.3rem 0.4rem;
-  font-size: 0.85rem;
-  color: var(--sky);
-}
-
-.step-pill .num {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--mist);
-  color: var(--navy);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.78rem;
-}
-
-.step-pill.active {
-  border-color: var(--navy);
-  color: var(--navy);
-}
-
-.step-pill.active .num {
-  background: var(--navy);
-  color: #fff;
-}
-
-.step-pill.done .num {
-  background: var(--ok);
-  color: #fff;
-}
-
 .text-brand {
   color: var(--navy) !important;
-}
-
-.bg-brand-mist {
-  background: var(--mist) !important;
 }
 
 .hidden {
@@ -920,21 +748,6 @@ fieldset.form-section legend {
   }
 }
 
-.skeleton-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex: none;
-}
-
-.skeleton-chip {
-  height: 1em;
-}
-
-.skeleton-card {
-  border-radius: var(--radius);
-}
-
 tr.skeleton-row td {
   padding-top: 0.85rem;
   padding-bottom: 0.85rem;
@@ -986,10 +799,6 @@ tr.skeleton-row td {
     text-align: center;
   }
 
-  .hero p.lead {
-    margin-left: auto;
-    margin-right: auto;
-  }
 }
 
 /* --- Responsive Hero Enhancements --- */
@@ -1091,4 +900,78 @@ tr.skeleton-row td {
     padding: 0.75rem 1.25rem !important;
     font-size: 1rem !important;
   }
+}
+
+/* ==========================================================================
+   Level Section & Branch Cards Redesign
+   ========================================================================== */
+
+.branch-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 575px) {
+  .branch-card-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+.branch-item-card {
+  border-radius: 1.15rem;
+  overflow: hidden;
+  min-height: 190px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.branch-item-card:hover {
+  transform: translateY(-4px);
+}
+
+.branch-title-text {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: #082A4D !important;
+  font-size: clamp(1.4rem, 2.2vw, 1.75rem);
+  line-height: 1.35;
+  letter-spacing: -0.4px;
+}
+
+/* Background Watermark Icon (Tilted top-right corner) */
+.branch-card-bg-icon {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  font-size: 5.4rem;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 0;
+  transform: rotate(15deg);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  user-select: none;
+}
+
+.branch-item-card:hover .branch-card-bg-icon {
+  transform: rotate(24deg) scale(1.12);
+  opacity: 0.22 !important;
+}
+
+.promo-card-item {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.promo-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 193, 7, 0.18) !important;
+}
+
+.promo-img-card:hover {
+  transform: scale(1.03);
+}
+
+.promo-empty-box {
+  background: #F8FAFC !important;
+  border: 1.5px dashed #CBD5E1 !important;
 }
