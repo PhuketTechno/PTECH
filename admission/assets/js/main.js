@@ -18,12 +18,6 @@
   setupCharacterScrollIn();
 
 
-  setupNavbarScroll();
-
-
-  setupSectionReveal();
-
-
   Promise.allSettled([
     loadSiteConfig(),
     loadPromotionsSection(),
@@ -205,31 +199,53 @@
         if (!host) return;
         const levelPromos = activePromos.filter(p => p.level === level);
         if (levelPromos.length === 0) {
-          host.innerHTML = '';
+          host.innerHTML = `
+            <div class="card border-0 rounded-4 h-100 d-flex align-items-center justify-content-center p-4 text-center promo-empty-box"
+                 style="background: #F8FAFC; border: 1.5px dashed #CBD5E1 !important; min-height: 220px;">
+              <div class="p-3">
+                <div class="rounded-circle bg-white shadow-xs d-inline-flex align-items-center justify-content-center mb-3 text-primary" style="width: 52px; height: 52px;">
+                  <i class="bi bi-gift fs-3"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">สิทธิประโยชน์พิเศษสำหรับผู้สมัคร</h6>
+                <p class="text-secondary small mb-0 lh-base">
+                  รับสิทธิ์แบ่งชำระค่าเรียน และสิทธิ์สมัครขอรับทุนการศึกษาหรือกองทุนเงินให้กู้ยืมเพื่อการศึกษา (กยศ.) ตามระเบียบวิทยาลัย
+                </p>
+              </div>
+            </div>
+          `;
           return;
         }
 
         const buildPromoCard = (p) => `
-          <div class="card border-0 shadow-sm mt-3 rounded-4 w-100" style="background: transparent; border: 1px solid #FFE69C !important; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15) !important;">
-            <div class="card-body p-3 p-lg-4" style="background: linear-gradient(145deg, #FFFDF8 0%, #FFF8E6 100%);">
-              <div class="d-flex justify-content-between align-items-start mb-3">
+          <div class="card border-0 shadow-sm rounded-4 w-100 h-100 promo-card-item" 
+               style="background: linear-gradient(145deg, #FFFDF8 0%, #FFF8E6 100%); border: 1.5px solid #FFE69C !important; box-shadow: 0 4px 14px rgba(255, 193, 7, 0.12) !important;">
+            <div class="card-body p-3 p-xl-4 d-flex flex-column h-100">
+              <div class="d-flex justify-content-between align-items-center mb-3">
                 <span class="badge text-dark fw-bold px-3 py-1 rounded-pill" style="background: #FFC107; font-size:0.85rem;">
-                  <i class="bi bi-star-fill text-dark me-1"></i> โปรโมชั่น ${level}
+                  <i class="bi bi-star-fill text-dark me-1"></i> สิทธิพิเศษ ${level}
+                </span>
+                <span class="badge bg-white text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 small">
+                  <i class="bi bi-fire text-warning me-1"></i>Hot
                 </span>
               </div>
               
-              <div class="d-flex flex-column flex-sm-row gap-3 align-items-start">
+              <div class="d-flex flex-column gap-3">
                 ${p.image_url ? `
-                <div class="flex-shrink-0 shadow-sm rounded-3 overflow-hidden bg-white" style="width: 140px; height: 140px;">
+                <div class="rounded-3 overflow-hidden bg-white shadow-sm position-relative w-100" style="height: 175px;">
                   <img src="${escapeHtml(toDriveImgSrc(p.image_url))}" class="w-100 h-100 promo-img-card" 
                        alt="โปรโมชั่น" role="button" title="คลิกเพื่อดูรูปขนาดเต็ม" 
                        data-bs-toggle="modal" data-bs-target="#imgPreviewModal" data-src="${escapeHtml(toDriveImgSrc(p.image_url))}"
-                       style="cursor:zoom-in; object-fit: cover; transition: transform 0.2s;">
+                       style="cursor:zoom-in; object-fit: cover; transition: transform 0.3s ease;">
+                  <div class="position-absolute bottom-0 end-0 m-2">
+                    <span class="badge bg-dark bg-opacity-75 text-white rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                      <i class="bi bi-arrows-fullscreen me-1"></i>ขยายภาพ
+                    </span>
+                  </div>
                 </div>
                 ` : ''}
-                <div class="flex-grow-1 pe-2" style="max-height: 140px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent;">
-                  ${p.title ? `<h6 class="fw-bold text-dark mb-2" style="font-size:1.05rem;">${escapeHtml(p.title)}</h6>` : ''}
-                  <p class="mb-0 text-secondary" style="font-size: 0.9rem; white-space:pre-line; line-height: 1.6;">${escapeHtml(p.description)}</p>
+                <div class="flex-grow-1" style="max-height: 220px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent;">
+                  ${p.title ? `<h6 class="fw-bold text-dark mb-2 fs-6 lh-base">${escapeHtml(p.title)}</h6>` : ''}
+                  <p class="mb-0 text-secondary small lh-base" style="white-space:pre-line;">${escapeHtml(p.description)}</p>
                 </div>
               </div>
             </div>
@@ -251,15 +267,15 @@
           `).join('');
 
           host.innerHTML = `
-            <div id="${carouselId}" class="carousel carousel-dark slide mt-2" data-bs-ride="carousel" data-bs-interval="5000">
-              <div class="carousel-inner pb-2">
+            <div id="${carouselId}" class="carousel carousel-dark slide h-100 d-flex flex-column" data-bs-ride="carousel" data-bs-interval="5000">
+              <div class="carousel-inner flex-grow-1 pb-2">
                 ${items}
               </div>
               
               <!-- Custom Controls Footer -->
-              <div class="d-flex align-items-center justify-content-center mt-2 gap-3">
-                <button type="button" data-bs-target="#${carouselId}" data-bs-slide="prev" class="btn btn-sm btn-link text-dark p-0 text-decoration-none d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
-                  <span class="carousel-control-prev-icon" aria-hidden="true" style="width: 1.2rem; height: 1.2rem;"></span>
+              <div class="d-flex align-items-center justify-content-center mt-2 gap-3 pt-1">
+                <button type="button" data-bs-target="#${carouselId}" data-bs-slide="prev" class="btn btn-sm btn-link text-dark p-0 text-decoration-none d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                  <span class="carousel-control-prev-icon" aria-hidden="true" style="width: 1rem; height: 1rem;"></span>
                   <span class="visually-hidden">Previous</span>
                 </button>
                 
@@ -267,8 +283,8 @@
                   ${indicators}
                 </div>
                 
-                <button type="button" data-bs-target="#${carouselId}" data-bs-slide="next" class="btn btn-sm btn-link text-dark p-0 text-decoration-none d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
-                  <span class="carousel-control-next-icon" aria-hidden="true" style="width: 1.2rem; height: 1.2rem;"></span>
+                <button type="button" data-bs-target="#${carouselId}" data-bs-slide="next" class="btn btn-sm btn-link text-dark p-0 text-decoration-none d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                  <span class="carousel-control-next-icon" aria-hidden="true" style="width: 1rem; height: 1rem;"></span>
                   <span class="visually-hidden">Next</span>
                 </button>
               </div>
@@ -343,6 +359,95 @@
     }
   }
 
+  function getBranchMeta(name) {
+    if (name.includes('บัญชี')) {
+      return {
+        icon: 'bi-calculator-fill',
+        color: '#047857',
+        cardBg: 'linear-gradient(145deg, #ffffff 40%, #E6FBF2 100%)',
+        border: '#A7F3D0',
+        badgeBg: '#D1FAE5',
+        badgeColor: '#065F46',
+        tag: 'การเงิน & บัญชี'
+      };
+    }
+    if (name.includes('ตลาด')) {
+      return {
+        icon: 'bi-megaphone-fill',
+        color: '#C2410C',
+        cardBg: 'linear-gradient(145deg, #ffffff 40%, #FFF1E6 100%)',
+        border: '#FED7AA',
+        badgeBg: '#FFEDD5',
+        badgeColor: '#9A3412',
+        tag: 'การตลาดดิจิทัล'
+      };
+    }
+    if (name.includes('ดิจิทัล')) {
+      return {
+        icon: 'bi-laptop-fill',
+        color: '#1D4ED8',
+        cardBg: 'linear-gradient(145deg, #ffffff 40%, #EBF3FF 100%)',
+        border: '#BFDBFE',
+        badgeBg: '#DBEAFE',
+        badgeColor: '#1E40AF',
+        tag: 'คอมพิวเตอร์ & ดิจิทัล'
+      };
+    }
+    if (name.includes('สารสนเทศ') || name.includes('สนเทศ')) {
+      return {
+        icon: 'bi-hdd-network-fill',
+        color: '#0369A1',
+        cardBg: 'linear-gradient(145deg, #ffffff 40%, #E6F6FF 100%)',
+        border: '#BAE6FD',
+        badgeBg: '#E0F2FE',
+        badgeColor: '#0369A1',
+        tag: 'ไอที & ระบบเครือข่าย'
+      };
+    }
+    if (name.includes('โรงแรม')) {
+      return {
+        icon: 'bi-building-fill',
+        color: '#6D28D9',
+        cardBg: 'linear-gradient(145deg, #ffffff 40%, #F5EDFF 100%)',
+        border: '#DDD6FE',
+        badgeBg: '#EDE9FE',
+        badgeColor: '#5B21B6',
+        tag: 'การโรงแรม & ที่พัก'
+      };
+    }
+    if (name.includes('ท่องเที่ยว')) {
+      return {
+        icon: 'bi-airplane-fill',
+        color: '#0F766E',
+        cardBg: 'linear-gradient(145deg, #ffffff 40%, #E6FAF8 100%)',
+        border: '#99F6E4',
+        badgeBg: '#CCFBF1',
+        badgeColor: '#115E59',
+        tag: 'การท่องเที่ยว & บริการ'
+      };
+    }
+    if (name.includes('โลจิสติกส์') || name.includes('ลอจิสติกส์')) {
+      return {
+        icon: 'bi-truck',
+        color: '#B45309',
+        cardBg: 'linear-gradient(145deg, #ffffff 40%, #FFF8E1 100%)',
+        border: '#FDE68A',
+        badgeBg: '#FEF3C7',
+        badgeColor: '#92400E',
+        tag: 'โลจิสติกส์ & ซัพพลายเชน'
+      };
+    }
+    return {
+      icon: 'bi-mortarboard-fill',
+      color: '#0E3B67',
+      cardBg: 'linear-gradient(145deg, #ffffff 40%, #EDF4FB 100%)',
+      border: '#CBD5E1',
+      badgeBg: '#E2E8F0',
+      badgeColor: '#1E293B',
+      tag: 'หลักสูตรวิชาชีพ'
+    };
+  }
+
   function renderBranchList(hostId, branches) {
     const host = document.getElementById(hostId);
     if (!branches || branches.length === 0) {
@@ -350,59 +455,61 @@
       return;
     }
 
-    const getIcon = (name) => {
-      if (name.includes('บัญชี')) return 'bi-calculator-fill';
-      if (name.includes('ตลาด')) return 'bi-megaphone-fill';
-      if (name.includes('ดิจิทัล') || name.includes('คอมพิวเตอร์')) return 'bi-laptop';
-      if (name.includes('โรงแรม')) return 'bi-building-fill';
-      if (name.includes('ท่องเที่ยว')) return 'bi-airplane-fill';
-      if (name.includes('ลอจิสติกส์')) return 'bi-truck';
-      if (name.includes('สนเทศ')) return 'bi-hdd-network-fill';
-      return 'bi-check-circle-fill';
-    };
+    host.innerHTML = branches.map(b => {
+      const meta = getBranchMeta(b.name);
+      const tracksBadges = b.track ? b.track.split('/').map(t => `
+        <span class="badge bg-light-subtle text-secondary border px-2.5 py-1 rounded-pill" style="font-size: 0.85rem; font-weight: 600;">
+          <i class="bi bi-check2 me-1" style="color: ${meta.color};"></i>${escapeHtml(t.trim())}
+        </span>
+      `).join(' ') : '';
 
-    host.innerHTML = branches.map(b => `
-      <div class="d-flex align-items-center mb-3 pb-3 border-bottom border-light w-100">
-        <div class="text-primary fs-5 me-3" style="color: #0D3B66 !important;"><i class="bi ${getIcon(b.name)}"></i></div>
-        <div class="fw-bold flex-grow-1 text-dark fs-6">
-          ${escapeHtml(b.name)} 
-          ${b.track ? `<span class="text-muted fw-normal ms-1" style="font-size:0.85em;">(${escapeHtml(b.track)})</span>` : ''}
+      return `
+        <div class="branch-item-card card border-0 rounded-4 p-3 p-sm-4 shadow-sm h-100 position-relative d-flex flex-column justify-content-between overflow-hidden"
+             style="background: ${meta.cardBg}; border: 1.5px solid ${meta.border} !important; box-shadow: 0 4px 14px rgba(13, 59, 102, 0.05);"
+             onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 26px -4px rgba(13, 59, 102, 0.12)';"
+             onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 14px rgba(13, 59, 102, 0.05)';">
+
+          <!-- Watermark Background Icon (Tilted at top-right corner) -->
+          <div class="branch-card-bg-icon position-absolute" 
+               style="top: -15px; right: -15px; font-size: 5.6rem; color: ${meta.color}; opacity: 0.13; transform: rotate(15deg); pointer-events: none; z-index: 0; line-height: 1;">
+            <i class="bi ${meta.icon}"></i>
+          </div>
+
+          <!-- Foreground Content -->
+          <div class="position-relative z-1">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-xs"
+                    style="background: #ffffff; color: ${meta.badgeColor}; font-size: 0.85rem; border: 1.5px solid ${meta.border};">
+                <span class="d-inline-block rounded-circle" style="width: 8px; height: 8px; background: ${meta.color};"></span>
+                ${meta.tag}
+              </span>
+            </div>
+
+            <div class="my-auto py-2">
+              <h4 class="fw-bolder mb-0 branch-title-text" title="${escapeHtml(b.name)}" style="color: #0B2540; font-size: clamp(1.4rem, 2.2vw, 1.75rem); letter-spacing: -0.4px; line-height: 1.35; text-shadow: 0 1px 2px rgba(255,255,255,0.9);">
+                ${escapeHtml(b.name)}
+              </h4>
+            </div>
+
+            ${tracksBadges ? `
+            <div class="d-flex flex-wrap gap-1.5 mt-2 mb-1">
+              ${tracksBadges}
+            </div>` : ''}
+          </div>
+
+          <div class="position-relative z-1 mt-3 pt-3 d-flex justify-content-between align-items-center"
+               style="border-top: 1px dashed rgba(13, 59, 102, 0.18);">
+            <span class="fw-semibold" style="color: #475569; font-size: 0.95rem;">
+              <i class="bi bi-wallet2 me-1.5 text-secondary"></i> ค่าใช้จ่ายรวม
+            </span>
+            <span class="fw-bolder" style="font-size: 1.22rem; color: #0D3B66;">
+              ${formatBaht(b.price)}
+            </span>
+          </div>
         </div>
-        <div class="fw-bold text-dark fs-6 ms-2">
-          ${formatBaht(b.price)} <span class="text-muted fw-normal small"></span>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
-  function setupNavbarScroll() {
-    const nav = document.querySelector('.landing-nav');
-    if (!nav) return;
-    const onScroll = () => {
-      if (window.scrollY > 40) nav.classList.add('scrolled');
-      else nav.classList.remove('scrolled');
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  }
-
-  function setupSectionReveal() {
-    const targets = document.querySelectorAll('.level-card, .promo-banner, .video-embed-wrap');
-    if (!targets.length) return;
-    targets.forEach(el => el.classList.add('reveal'));
-    if ('IntersectionObserver' in window) {
-      const io = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            io.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.15 });
-      targets.forEach(el => io.observe(el));
-    } else {
-      targets.forEach(el => el.classList.add('visible'));
-    }
-  }
 })();
 
