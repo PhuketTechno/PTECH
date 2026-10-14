@@ -16,6 +16,15 @@
   --radius: 14px;
   --radius-sm: 8px;
   --shadow-card: 0 10px 30px -14px rgba(14, 59, 103, 0.28);
+
+  /* Level Sections Styling Variables */
+  --level-pvc-bg: #bccee1;
+  --level-pvc-border: #D5E4F9;
+  --level-pvc-shadow: 0 10px 30px -10px rgba(13, 59, 102, 0.08), 0 2px 8px rgba(13, 59, 102, 0.04);
+
+  --level-pvs-bg: #c9f0ea;
+  --level-pvs-border: #CDEEE5;
+  --level-pvs-shadow: 0 10px 30px -10px rgba(0, 121, 107, 0.08), 0 2px 8px rgba(0, 121, 107, 0.04);
 }
 
 body {
@@ -953,14 +962,38 @@ tr.skeleton-row td {
 }
 
 /* Section Level Banner & Sticky Promo */
+.level-container-card {
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  transition: box-shadow 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .level-container-card {
+    padding: 2rem;
+  }
+}
+
+/* ระดับ ปวช. - โทนฟ้าสว่าง สะอาด สดใส */
+.level-pvc-card {
+  background-color: var(--level-pvc-bg) !important;
+  border: 1px solid var(--level-pvc-border);
+  box-shadow: var(--level-pvc-shadow);
+}
+
+/* ระดับ ปวส. - โทนเขียวมินต์/เอเมอรัลด์นุ่มนวล สบายตา แยกความต่างชัดเจน */
+.level-pvs-card {
+  background-color: var(--level-pvs-bg) !important;
+  border: 1px solid var(--level-pvs-border);
+  box-shadow: var(--level-pvs-shadow);
+}
+
 .section-banner-card {
   position: relative;
   border-radius: 1.25rem 1.25rem 0 0;
   overflow: visible !important;
   box-shadow: none;
 }
-
-
 
 .banner-bottom-curve {
   position: absolute;
@@ -980,9 +1013,15 @@ tr.skeleton-row td {
   transform: translateY(1px);
 }
 
-.banner-bottom-curve svg,
-.banner-bottom-curve path {
-  fill: var(--paper, #F2F6FB) !important;
+/* สี svg curve ให้กลมกลืนกับสีพื้นหลังของแต่ละระดับตามตัวแปร */
+.level-pvc-card .banner-bottom-curve svg,
+.level-pvc-card .banner-bottom-curve path {
+  fill: var(--level-pvc-bg) !important;
+}
+
+.level-pvs-card .banner-bottom-curve svg,
+.level-pvs-card .banner-bottom-curve path {
+  fill: var(--level-pvs-bg) !important;
 }
 
 @media (min-width: 992px) {
