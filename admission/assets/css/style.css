@@ -126,19 +126,7 @@ a:hover {
   overflow: hidden;
 }
 
-.hero::after {
-  content: "";
-  position: absolute;
-  inset: auto -10% -60% -10%;
-  height: 220px;
-  background: var(--paper);
-  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-}
 
-.hero h1 {
-  font-size: clamp(2rem, 4.2vw, 3.1rem);
-  font-weight: 600;
-}
 
 
 @keyframes heroBgAnimLeft {
@@ -222,17 +210,17 @@ a:hover {
 }
 
 
-.level-character {
+.level-character,
+.section-banner-character {
   position: absolute;
-  bottom: -10px;
-  right: -10px;
-  /* margin-right: -20px; */
-  width: 120px;
-  height: 155px;
+  bottom: 0;
+  right: 15px;
+  width: 170px !important;
+  height: 220px !important;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom right;
-  z-index: 3;
+  z-index: 1 !important;
   pointer-events: none;
   filter: none;
   opacity: 0;
@@ -303,14 +291,7 @@ a:hover {
   }
 }
 
-@media (max-width: 575px) {
-  .level-character {
-    width: 90px;
-    height: 115px;
-    right: -5px;
-    bottom: -5px;
-  }
-}
+
 
 @media (prefers-reduced-motion: reduce) {
   .level-character {
@@ -794,12 +775,7 @@ tr.skeleton-row td {
   background: var(--mist) !important;
 }
 
-@media (max-width: 767px) {
-  .hero {
-    text-align: center;
-  }
 
-}
 
 /* --- Responsive Hero Enhancements --- */
 .main-hero-section {
@@ -974,4 +950,44 @@ tr.skeleton-row td {
 .promo-empty-box {
   background: #F8FAFC !important;
   border: 1.5px dashed #CBD5E1 !important;
+}
+
+/* Section Level Banner & Sticky Promo */
+.section-banner-card {
+  position: relative;
+  border-radius: 1.25rem 1.25rem 0 0;
+  overflow: visible !important;
+  box-shadow: none;
+}
+
+
+
+.banner-bottom-curve {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  line-height: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.banner-bottom-curve svg {
+  display: block;
+  width: 100%;
+  height: 18px;
+  vertical-align: bottom;
+  transform: translateY(1px);
+}
+
+.banner-bottom-curve svg,
+.banner-bottom-curve path {
+  fill: var(--paper, #F2F6FB) !important;
+}
+
+@media (min-width: 992px) {
+  .promo-sidebar-sticky {
+    position: sticky;
+    top: 90px;
+  }
 }
