@@ -211,26 +211,23 @@
 
     const qsId = new URLSearchParams(window.location.search).get('id');
     const qsUid = new URLSearchParams(window.location.search).get('uid');
-    if (qsId || qsUid) {
+
+    if (qsId && !qsUid) {
+      showToast('เพื่อความปลอดภัย กรุณาเข้าถึงข้อมูลใบสมัครผ่านลิงก์ UID ส่วนบุคคลที่ได้รับเท่านั้น', 'warning');
+    }
+
+    if (qsUid) {
       showLoader('กำลังโหลดข้อมูล...');
       const { data: qsApp, error: qsError } = await sb.rpc('get_application_info', {
-        p_id: qsId || null,
-        p_uid: qsUid ? qsUid.toLowerCase() : null
+        p_uid: qsUid.trim().toLowerCase()
       }).single();
       hideLoader();
       if (!qsError && qsApp) {
         document.getElementById('success-docno').textContent = qsApp.doc_no || '-';
-        const pdfLink = document.getElementById('success-pdf-link');
-        if (qsApp.pdf_url) {
-          pdfLink.href = toViewDriveUrl(qsApp.pdf_url);
-          pdfLink.classList.remove('d-none');
-        } else {
-          pdfLink.classList.add('d-none');
-        }
         document.getElementById('success-summary').innerHTML = [
           summaryRow('สมัครเรียน', `${qsApp.level} ${qsApp.branch}`),
           summaryRow('ชื่อ-นามสกุล', `${qsApp.prefix}${qsApp.name} ${qsApp.lastname}`),
-          summaryRow('สถานะ', statusLabel(qsApp.status), true),
+          summaryRow('สถานะ', `<div class="d-inline-flex flex-wrap align-items-center gap-2">${statusLabel(qsApp.status)}${pdfActionBtn(qsApp)}</div>`, true),
         ].join('');
         const pdfStatusError = document.getElementById('pdf-status-error');
         if (pdfStatusError) pdfStatusError.classList.add('d-none');
@@ -314,7 +311,7 @@
       summaryRow('ระดับ/สาขา', `${app.level} ${app.branch}`) +
       summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`) +
       summaryRow('เบอร์โทร', app.student_phone ? app.student_phone.replace(/(\d{3})\d{4}(\d{3})/, '$1XXXX$2') : '-') +
-      summaryRow('สถานะ', statusLabel(app.status), true);
+      summaryRow('สถานะ', `<div class="d-inline-flex flex-wrap align-items-center gap-2">${statusLabel(app.status)}${pdfActionBtn(app, true)}</div>`, true);
 
     const link = document.getElementById('existing-pdf-link');
     const retryBtn = document.getElementById('btn-retry-pdf-existing');
@@ -342,6 +339,14 @@
     else if (s === 'rejected') badgeClass = 'bg-danger';
     return `<span class="badge ${badgeClass} fs-6 px-3 py-2 shadow-sm">${text}</span>`;
   }
+
+  function pdfActionBtn(app, isExisting = false) {
+    const linkId = isExisting ? 'existing-pdf-link' : 'success-pdf-link';
+    const href = app && app.pdf_url ? toViewDriveUrl(app.pdf_url) : '#';
+    const hideClass = (app && app.pdf_url) ? '' : ' d-none';
+    return `<a href="${href}" id="${linkId}" target="_blank" class="btn btn-danger btn-sm shadow-sm${hideClass}"><i class="bi bi-file-earmark-pdf me-1"></i>ดาวน์โหลดใบสมัคร PDF</a>`;
+  }
+
   function summaryRow(label, value, isHtml = false) {
     const val = isHtml ? (value ?? '-') : escapeHtml(value ?? '-');
     return `<dt class="col-5 text-muted">${escapeHtml(label)}</dt><dd class="col-7">${val}</dd>`;
@@ -642,8 +647,8 @@
       box.innerHTML = '';
       return;
     }
-    const levelText = level || '...';
-    const branchText = branch ? branchDisplayName(branch) : '<span class="opacity-75">ยังไม่ได้เลือก</span>';
+    const levelText = escapeHtml(level || '...');
+    const branchText = branch ? escapeHtml(branchDisplayName(branch)) : '<span class="opacity-75">ยังไม่ได้เลือก</span>';
     box.innerHTML = `
       <div class="selection-summary-block">
         <div class="selection-summary-icon">
@@ -1091,7 +1096,7 @@
           const currentUrl = window.location.origin + window.location.pathname.replace(/\/apply\.html$/, '');
           const { error: emailError } = await sb.functions.invoke('send-confirmation-email', {
             body: {
-              app: { ...app, pdf_url: pdfUrl },
+              app: { id: app.id, uid: app.uid, pdf_url: pdfUrl },
               site_url: currentUrl,
               origin_url: currentUrl
             },
@@ -1106,7 +1111,7 @@
       if (isLineEnabled) {
         sb.functions.invoke('send-line-notification', {
           body: {
-            app: app,
+            app: { id: app.id, uid: app.uid },
             pdf_url: toViewDriveUrl(pdfUrl)
           }
         }).catch(e => console.warn('Edge Function Line Notification Error:', e));
@@ -1114,11 +1119,10 @@
 
       hideLoader();
       document.getElementById('success-docno').textContent = app.doc_no;
-      document.getElementById('success-pdf-link').href = toViewDriveUrl(pdfUrl);
       document.getElementById('success-summary').innerHTML = [
         summaryRow('สมัครเรียน', `${app.level} ${app.branch}`),
         summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`),
-        summaryRow('สถานะ', statusLabel(app.status), true),
+        summaryRow('สถานะ', `<div class="d-inline-flex flex-wrap align-items-center gap-2">${statusLabel(app.status)}${pdfActionBtn(Object.assign({}, app, { pdf_url: pdfUrl }))}</div>`, true),
       ].join('');
       document.getElementById('pdf-status-error').classList.add('d-none');
 
