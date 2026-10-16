@@ -15,10 +15,6 @@
   <link href="assets/css/style.css" rel="stylesheet">
   <!-- Google reCAPTCHA v3 -->
   <script src="https://www.google.com/recaptcha/api.js?render=6LcKuNotAAAAAN3yxsHVEWouqwHbfyHRF5dS_Kz7"></script>
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com https://npmcdn.com https://www.statcounter.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://www.google.com https://www.gstatic.com; frame-src 'self' https://www.youtube.com https://www.google.com;">
-  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
-  <meta http-equiv="X-Content-Type-Options" content="nosniff">
 </head>
 
 <body>
@@ -124,6 +120,8 @@
 
         <div id="existing-pdf-error" class="alert alert-danger py-2 px-3 small mt-4 mb-0 d-none"></div>
         <div class="d-grid gap-2 mt-4">
+          <a href="#" id="existing-pdf-link" target="_blank" class="btn btn-brand"><i
+              class="bi bi-file-earmark-pdf me-2"></i>ดาวน์โหลดใบสมัคร PDF</a>
           <button class="btn btn-brand-outline d-none" id="btn-retry-pdf-existing"><i
               class="bi bi-arrow-repeat me-2"></i>สร้างไฟล์ PDF ใหม่อีกครั้ง</button>
           <button class="btn btn-brand-outline" id="btn-back-login"><i
@@ -496,6 +494,8 @@
 
         <div id="pdf-status-error" class="alert alert-danger text-start mt-4 mb-0 d-none"></div>
         <div class="d-grid gap-2 mt-4">
+          <a href="#" id="success-pdf-link" target="_blank" class="btn btn-brand btn-lg"><i
+              class="bi bi-file-earmark-pdf me-2"></i>ดาวน์โหลดใบสมัคร PDF</a>
           <a href="index.html" class="btn btn-brand-outline">กลับหน้าแรก</a>
         </div>
       </div>
@@ -602,8 +602,6 @@
 
   </script>
   <script src="assets/js/apply.js">
-
-
 
   </script>
 </body>
