@@ -220,17 +220,11 @@
       hideLoader();
       if (!qsError && qsApp) {
         document.getElementById('success-docno').textContent = qsApp.doc_no || '-';
-        const pdfLink = document.getElementById('success-pdf-link');
-        if (qsApp.pdf_url) {
-          pdfLink.href = toViewDriveUrl(qsApp.pdf_url);
-          pdfLink.classList.remove('d-none');
-        } else {
-          pdfLink.classList.add('d-none');
-        }
         document.getElementById('success-summary').innerHTML = [
           summaryRow('สมัครเรียน', `${qsApp.level} ${qsApp.branch}`),
           summaryRow('ชื่อ-นามสกุล', `${qsApp.prefix}${qsApp.name} ${qsApp.lastname}`),
           summaryRow('สถานะ', statusLabel(qsApp.status)),
+          summaryRow('ใบสมัคร', pdfActionBtn(qsApp)),
         ].join('');
         const pdfStatusError = document.getElementById('pdf-status-error');
         if (pdfStatusError) pdfStatusError.classList.add('d-none');
@@ -314,7 +308,8 @@
       summaryRow('ระดับ/สาขา', `${app.level} ${app.branch}`) +
       summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`) +
       summaryRow('เบอร์โทร', app.student_phone ? app.student_phone.replace(/(\d{3})\d{4}(\d{3})/, '$1XXXX$2') : '-') +
-      summaryRow('สถานะ', statusLabel(app.status));
+      summaryRow('สถานะ', statusLabel(app.status)) +
+      summaryRow('ใบสมัคร', pdfActionBtn(app, true));
 
     const link = document.getElementById('existing-pdf-link');
     const retryBtn = document.getElementById('btn-retry-pdf-existing');
@@ -342,6 +337,14 @@
     else if (s === 'rejected') badgeClass = 'bg-danger';
     return `<span class="badge ${badgeClass} fs-6 px-3 py-2 shadow-sm">${text}</span>`;
   }
+
+  function pdfActionBtn(app, isExisting = false) {
+    const linkId = isExisting ? 'existing-pdf-link' : 'success-pdf-link';
+    const href = app && app.pdf_url ? toViewDriveUrl(app.pdf_url) : '#';
+    const hideClass = (app && app.pdf_url) ? '' : ' d-none';
+    return `<a href="${href}" id="${linkId}" target="_blank" class="btn btn-danger btn-sm shadow-sm${hideClass}"><i class="bi bi-file-earmark-pdf me-1"></i>ดาวน์โหลดใบสมัคร PDF</a>`;
+  }
+
   function summaryRow(label, value) {
     return `<dt class="col-5 text-muted">${label}</dt><dd class="col-7">${value ?? '-'}</dd>`;
   }
@@ -1108,11 +1111,11 @@
 
       hideLoader();
       document.getElementById('success-docno').textContent = app.doc_no;
-      document.getElementById('success-pdf-link').href = toViewDriveUrl(pdfUrl);
       document.getElementById('success-summary').innerHTML = [
         summaryRow('สมัครเรียน', `${app.level} ${app.branch}`),
         summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`),
         summaryRow('สถานะ', statusLabel(app.status)),
+        summaryRow('ใบสมัคร', pdfActionBtn(Object.assign({}, app, { pdf_url: pdfUrl }))),
       ].join('');
       document.getElementById('pdf-status-error').classList.add('d-none');
 
