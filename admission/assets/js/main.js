@@ -243,7 +243,7 @@
                   </div>
                 </div>
                 ` : ''}
-                <div class="flex-grow-1" style="max-height: 220px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.2) transparent;">
+                <div class="flex-grow-1">
                   ${p.title ? `<h6 class="fw-bold text-dark mb-2 fs-6 lh-base">${escapeHtml(p.title)}</h6>` : ''}
                   <p class="mb-0 text-secondary small lh-base" style="white-space:pre-line;">${escapeHtml(p.description)}</p>
                 </div>
@@ -252,45 +252,12 @@
           </div>
         `;
 
-        if (levelPromos.length === 1) {
-          host.innerHTML = buildPromoCard(levelPromos[0]);
-        } else {
-          const carouselId = `carouselPromo${hostId}`;
-          const items = levelPromos.map((p, ix) => `
-            <div class="carousel-item ${ix === 0 ? 'active' : ''}">
-              ${buildPromoCard(p)}
-            </div>
-          `).join('');
-
-          const indicators = levelPromos.map((p, ix) => `
-            <button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${ix}" ${ix === 0 ? 'class="active" aria-current="true"' : ''} aria-label="Slide ${ix + 1}" style="background-color: #FFC107; width: 10px; height: 10px; border-radius: 50%; opacity: 0.5; margin: 0 4px; border: none; padding: 0;"></button>
-          `).join('');
-
-          host.innerHTML = `
-            <div id="${carouselId}" class="carousel carousel-dark slide h-100 d-flex flex-column" data-bs-ride="carousel" data-bs-interval="5000">
-              <div class="carousel-inner flex-grow-1 pb-2">
-                ${items}
-              </div>
-              
-              <!-- Custom Controls Footer -->
-              <div class="d-flex align-items-center justify-content-center mt-2 gap-3 pt-1">
-                <button type="button" data-bs-target="#${carouselId}" data-bs-slide="prev" class="btn btn-sm btn-link text-dark p-0 text-decoration-none d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
-                  <span class="carousel-control-prev-icon" aria-hidden="true" style="width: 1rem; height: 1rem;"></span>
-                  <span class="visually-hidden">Previous</span>
-                </button>
-                
-                <div class="d-flex align-items-center m-0">
-                  ${indicators}
-                </div>
-                
-                <button type="button" data-bs-target="#${carouselId}" data-bs-slide="next" class="btn btn-sm btn-link text-dark p-0 text-decoration-none d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
-                  <span class="carousel-control-next-icon" aria-hidden="true" style="width: 1rem; height: 1rem;"></span>
-                  <span class="visually-hidden">Next</span>
-                </button>
-              </div>
-            </div>
-          `;
-        }
+        // แสดงทุกโปรโมชั่นเรียงต่อกันในแนวตั้ง (ไม่ใช้ carousel) เพื่อให้เห็นรายละเอียดครบทุกรายการ
+        host.innerHTML = `
+          <div class="d-flex flex-column gap-3">
+            ${levelPromos.map(buildPromoCard).join('')}
+          </div>
+        `;
 
         host.querySelectorAll('.promo-img-card').forEach(el => {
           el.addEventListener('click', function () {
