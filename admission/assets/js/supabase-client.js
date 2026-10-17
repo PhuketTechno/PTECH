@@ -41,7 +41,7 @@ function extractYouTubeId(urlOrId) {
   if (!urlOrId) return '';
   const clean = String(urlOrId).trim();
   if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) return clean;
-  const match = clean.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([a-zA-Z0-9_-]{11})/);
+  const match = clean.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|shorts\/|live\/|watch\?v=|watch\?.+&v=))([a-zA-Z0-9_-]{11})/);
   return match ? match[1] : '';
 }
 
