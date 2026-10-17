@@ -31,7 +31,7 @@
     document.getElementById('admin-app').classList.remove('d-none');
     const cfg = await fetchConfig();
     document.getElementById('sidebar-school-name').textContent = cfg.school_name || '';
-    if (cfg.favicon_url) document.getElementById('favicon').href = cfg.favicon_url;
+    if (cfg.favicon_url) document.getElementById('favicon').href = toDriveImgSrc(cfg.favicon_url);
 
     setupNav();
     loadDashboard();
@@ -93,6 +93,11 @@
 
   document.getElementById('btn-refresh-apps').addEventListener('click', () => loadApplications(true));
 
+  function csvSafe(val) {
+    const s = String(val ?? '');
+    return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+  }
+
   document.getElementById('btn-export-excel')?.addEventListener('click', async () => {
     const btn = document.getElementById('btn-export-excel');
     const originalText = btn.innerHTML;
@@ -109,13 +114,13 @@
 
       const exportData = data.map((a, idx) => ({
         'ลำดับ': idx + 1,
-        'เลขบัตรประชาชน': a.idcard ? "'" + a.idcard : '',
-        'ชื่อ-นามสกุล': (a.prefix || '') + (a.name || '') + ' ' + (a.lastname || ''),
-        'ระดับ': a.level || '',
-        'สาขา': a.branch || '',
-        'สถานะ': a.status === 'approved' ? 'อนุมัติแล้ว' : (a.status === 'pending' ? 'รอตรวจสอบ' : (a.status === 'rejected' ? 'ไม่อนุมัติ' : a.status)),
-        'สถานศึกษาเดิม': a.school || '',
-        'จังหวัดสถานศึกษาเดิม': a.school_province || '',
+        'เลขบัตรประชาชน': a.idcard ? "'" + csvSafe(a.idcard) : '',
+        'ชื่อ-นามสกุล': csvSafe((a.prefix || '') + (a.name || '') + ' ' + (a.lastname || '')),
+        'ระดับ': csvSafe(a.level || ''),
+        'สาขา': csvSafe(a.branch || ''),
+        'สถานะ': csvSafe(a.status === 'approved' ? 'อนุมัติแล้ว' : (a.status === 'pending' ? 'รอตรวจสอบ' : (a.status === 'rejected' ? 'ไม่อนุมัติ' : a.status))),
+        'สถานศึกษาเดิม': csvSafe(a.school || ''),
+        'จังหวัดสถานศึกษาเดิม': csvSafe(a.school_province || ''),
         'pdf link': a.pdf_url ? toViewDriveUrl(a.pdf_url) : ''
       }));
 
@@ -162,17 +167,17 @@
     tbody.innerHTML = data.map((a, idx) => `
       <tr>
         <td>${idx + 1}</td>
-        <td data-sort="${a.created_at}">${new Date(a.created_at).toLocaleDateString('th-TH')}</td>
-        <td>${a.level} ${escapeHtml(a.branch)}</td>
-        <td>${escapeHtml(a.prefix + a.name + ' ' + a.lastname)}</td>
+        <td data-sort="${escapeHtml(a.created_at)}">${new Date(a.created_at).toLocaleDateString('th-TH')}</td>
+        <td>${escapeHtml(a.level)} ${escapeHtml(a.branch)}</td>
+        <td>${escapeHtml((a.prefix || '') + (a.name || '') + ' ' + (a.lastname || ''))}</td>
         <td>${statusBadge(a.status)}</td>
         <td class="text-nowrap">
-          <button class="btn btn-sm btn-brand-outline btn-view" data-id="${a.id}"><i class="bi bi-eye"></i></button>
-          <button class="btn btn-sm btn-outline-danger btn-del" data-id="${a.id}"><i class="bi bi-trash"></i></button>
+          <button class="btn btn-sm btn-brand-outline btn-view" data-id="${escapeHtml(a.id)}"><i class="bi bi-eye"></i></button>
+          <button class="btn btn-sm btn-outline-danger btn-del" data-id="${escapeHtml(a.id)}"><i class="bi bi-trash"></i></button>
         </td>
       </tr>`).join('');
 
-    tbody.querySelectorAll('.btn-view').forEach(b => b.addEventListener('click', () => openAppModal(data.find(x => x.id === b.dataset.id))));
+    tbody.querySelectorAll('.btn-view').forEach(b => b.addEventListener('click', () => openAppModal(data.find(x => String(x.id) === b.dataset.id))));
     tbody.querySelectorAll('.btn-del').forEach(b => b.addEventListener('click', () => deleteApplication(b.dataset.id)));
 
     if (dt) dt.destroy();
@@ -189,12 +194,12 @@
   function statusBadge(s) {
     const map = { pending: ['secondary', 'รอตรวจสอบ'], approved: ['success', 'อนุมัติแล้ว'], rejected: ['danger', 'ไม่อนุมัติ'] };
     const [cls, label] = map[s] || ['secondary', s];
-    return `<span class="badge text-bg-${cls}">${label}</span>`;
+    return `<span class="badge text-bg-${cls}">${escapeHtml(label)}</span>`;
   }
 
   function pdfStatusBadge(app) {
     if (app.pdf_url) {
-      return `<span class="badge text-bg-success">พร้อมแล้ว</span> <a href="${toViewDriveUrl(app.pdf_url)}" target="_blank">เปิดไฟล์ PDF</a>`;
+      return `<span class="badge text-bg-success">พร้อมแล้ว</span> <a href="${escapeHtml(toViewDriveUrl(app.pdf_url))}" target="_blank" rel="noopener">เปิดไฟล์ PDF</a>`;
     }
     return `<span class="badge text-bg-secondary">ยังไม่มีไฟล์</span>`;
   }
@@ -248,14 +253,14 @@
 
     function fg(id, label, val, type = "text", xtra = "") {
       return `<div class="col-sm-6 mb-2">
-        <label class="form-label small text-muted mb-1">${label}</label>
+        <label class="form-label small text-muted mb-1">${escapeHtml(label)}</label>
         <input type="${type}" class="form-control form-control-sm" id="edit_${id}" value="${escapeHtml(val || '')}" ${xtra}>
       </div>`;
     }
 
     function fgs(id, label, val, options) {
       let html = `<div class="col-sm-6 mb-2">
-        <label class="form-label small text-muted mb-1">${label}</label>
+        <label class="form-label small text-muted mb-1">${escapeHtml(label)}</label>
         <select class="form-select form-select-sm" id="edit_${id}">`;
       options.forEach(o => {
         html += `<option value="${escapeHtml(o.v)}" ${o.v === val ? 'selected' : ''}>${escapeHtml(o.l)}</option>`;
@@ -265,21 +270,22 @@
     }
 
     function fileInputHtml(num, label, fileId) {
-      const imgSrc = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : '';
-      const display = fileId ? 'inline-block' : 'none';
-      const noDisplay = fileId ? 'none' : 'inline';
+      const safeFileId = String(fileId || '').replace(/[^a-zA-Z0-9_-]/g, '');
+      const imgSrc = safeFileId ? escapeHtml(toDriveImgSrc(safeFileId)) : '';
+      const display = safeFileId ? 'inline-block' : 'none';
+      const noDisplay = safeFileId ? 'none' : 'inline';
       return `
         <div class="col-sm-4 mb-3 text-center">
-           <label class="form-label small text-muted mb-1 d-block text-start">${label} ใหม่</label>
-           <button type="button" class="btn btn-outline-secondary btn-sm mb-2 w-100" onclick="window.openAppPhotoModal(${num})">
+           <label class="form-label small text-muted mb-1 d-block text-start">${escapeHtml(label)} ใหม่</label>
+           <button type="button" class="btn btn-outline-secondary btn-sm mb-2 w-100" onclick="window.openAppPhotoModal(${Number(num)})">
              <i class="bi bi-camera me-1"></i> อัปโหลดรูปใหม่
            </button>
-           <input type="file" class="d-none" id="edit_file${num}" accept="image/*">
-           <div id="thumb_container_${num}" class="position-relative border rounded bg-white p-1 shadow-sm mt-1" style="cursor: zoom-in; display: ${display};">
-               <img id="thumb_img_${num}" src="${imgSrc}" style="max-height: 90px; object-fit: contain;" onclick="openAdminLightbox(this.src)">
-               <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle shadow" onclick="window.clearAppPhoto(${num}, '${fileId || ''}')" style="width: 20px; height: 20px; padding: 0; line-height: 1;" title="ยกเลิกการเลือกภาพ"><i class="bi bi-x" style="font-size: 0.8rem;"></i></button>
+           <input type="file" class="d-none" id="edit_file${Number(num)}" accept="image/*">
+           <div id="thumb_container_${Number(num)}" class="position-relative border rounded bg-white p-1 shadow-sm mt-1" style="cursor: zoom-in; display: ${display};">
+               <img id="thumb_img_${Number(num)}" src="${imgSrc}" style="max-height: 90px; object-fit: contain;" onclick="openAdminLightbox(this.src)">
+               <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle shadow" onclick="window.clearAppPhoto(${Number(num)}, '${safeFileId}')" style="width: 20px; height: 20px; padding: 0; line-height: 1;" title="ยกเลิกการเลือกภาพ"><i class="bi bi-x" style="font-size: 0.8rem;"></i></button>
            </div>
-           <span id="no_thumb_text_${num}" class="small text-muted" style="display: ${noDisplay};">ไม่มีรูปเดิม</span>
+           <span id="no_thumb_text_${Number(num)}" class="small text-muted" style="display: ${noDisplay};">ไม่มีรูปเดิม</span>
         </div>
       `;
     }
@@ -428,10 +434,10 @@
               </div>
               
               <div class="d-flex flex-wrap mb-3 p-3 bg-light rounded border min-vh-25" id="existing_slips_container">
-                ${(app.payment_slip_url || '').split(',').map(s => s.trim()).filter(Boolean).map(slipId => `
+                ${(app.payment_slip_url || '').split(',').map(s => s.trim().replace(/[^a-zA-Z0-9_-]/g, '')).filter(Boolean).map(slipId => `
                   <div class="d-inline-block position-relative me-3 mb-3">
-                    <img src="https://lh3.googleusercontent.com/d/${slipId}" style="height: 150px; object-fit: contain; cursor: zoom-in;" class="border rounded shadow-sm bg-white" onclick="openAdminLightbox(this.src)">
-                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 start-100 translate-middle rounded-circle shadow delete-slip-btn" data-slip-id="${slipId}" style="width: 28px; height: 28px; padding: 0; line-height: 1;"><i class="bi bi-x"></i></button>
+                    <img src="${escapeHtml(toDriveImgSrc(slipId))}" style="height: 150px; object-fit: contain; cursor: zoom-in;" class="border rounded shadow-sm bg-white" onclick="openAdminLightbox(this.src)">
+                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 start-100 translate-middle rounded-circle shadow delete-slip-btn" data-slip-id="${escapeHtml(slipId)}" style="width: 28px; height: 28px; padding: 0; line-height: 1;"><i class="bi bi-x"></i></button>
                   </div>
                 `).join('')}
                 ${!app.payment_slip_url ? '<span class="text-muted">ยังไม่มีสลิปชำระเงินในระบบ...</span>' : ''}
@@ -494,9 +500,10 @@
     }
 
     const footer = document.getElementById('appModalFooter');
+    const detailQuery = app.uid ? `uid=${encodeURIComponent(app.uid)}` : `id=${encodeURIComponent(app.id)}`;
     footer.innerHTML = `
       <div class="d-flex gap-2 me-auto">
-        <a href="../apply.html?${app.uid ? `uid=${app.uid}` : `id=${app.id}`}" target="_blank" class="btn btn-outline-primary">
+        <a href="../apply.html?${escapeHtml(detailQuery)}" target="_blank" rel="noopener" class="btn btn-outline-primary">
           <i class="bi bi-box-arrow-up-right me-1"></i> หน้ารายละเอียดผู้สมัคร
         </a>
         <button type="button" class="btn btn-outline-secondary" id="btnCopyDirectLink" title="คัดลอกลิงก์">
@@ -507,7 +514,11 @@
     `;
 
     document.getElementById('btnCopyDirectLink').addEventListener('click', () => {
-      const fullUrl = new URL(`../apply.html?${app.uid ? `uid=${app.uid}` : `id=${app.id}`}`, window.location.href).href;
+      if (!app.uid) {
+        showToast('ใบสมัครนี้ยังไม่มีรหัส UID กรุณากดบันทึกเพื่อสร้าง UID ก่อนแชร์ลิงก์', 'warning');
+        return;
+      }
+      const fullUrl = new URL(`../apply.html?uid=${encodeURIComponent(app.uid)}`, window.location.href).href;
       navigator.clipboard.writeText(fullUrl).then(() => {
         if (typeof showToast === 'function') {
           showToast('คัดลอกลิงก์สำเร็จ', 'success');
@@ -1160,7 +1171,7 @@
         <div class="d-flex justify-content-between align-items-start gap-2">
           <div>
             ${p.title ? `<div class="fw-semibold">${escapeHtml(p.title)}</div>` : ''}
-            <div class="small text-muted" style="white-space:pre-line">${escapeHtml(p.description).slice(0, 140)}${p.description.length > 140 ? '…' : ''}</div>
+            <div class="small text-muted" style="white-space:pre-line">${escapeHtml(p.description || '').slice(0, 140)}${(p.description && p.description.length > 140) ? '…' : ''}</div>
           </div>
           <span class="badge text-bg-${p.enabled ? 'success' : 'secondary'}">${p.enabled ? 'เปิดใช้งาน' : 'ปิดอยู่'}</span>
         </div>
@@ -1238,11 +1249,11 @@
       return;
     }
     tbody.innerHTML = data.map(l => `
-      <tr data-id="${l.id}">
+      <tr data-id="${escapeHtml(l.id)}">
         <td class="drag-handle"><i class="bi bi-grip-vertical"></i></td>
         <td>${escapeHtml(l.label)}</td>
-        <td class="text-truncate" style="max-width:220px"><a href="${l.url}" target="_blank">${escapeHtml(l.url)}</a></td>
-        <td><i class="bi ${l.icon || 'bi-link-45deg'}"></i> <span class="small text-muted">${l.icon || ''}</span></td>
+        <td class="text-truncate" style="max-width:220px"><a href="${escapeHtml(sanitizeUrl(l.url))}" target="_blank" rel="noopener">${escapeHtml(l.url)}</a></td>
+        <td><i class="bi ${escapeHtml(l.icon || 'bi-link-45deg')}"></i> <span class="small text-muted">${escapeHtml(l.icon || '')}</span></td>
         <td>
           <div class="form-check form-switch mb-0">
             <input class="form-check-input link-active-toggle" type="checkbox" ${l.active ? 'checked' : ''}>
@@ -1256,7 +1267,7 @@
 
     tbody.querySelectorAll('tr').forEach(tr => {
       const id = tr.dataset.id;
-      const record = data.find(x => x.id === id);
+      const record = data.find(x => String(x.id) === id);
       tr.querySelector('.link-active-toggle').addEventListener('change', async (e) => {
         await sb.from('social_links').update({ active: e.target.checked }).eq('id', id);
       });
@@ -1367,7 +1378,7 @@
       </div>`).join('') +
       `<div class="mb-3">${skeletonBox('100%', '2.8em', 'border-radius:999px;')}</div>`;
 
-    const cfg = await fetchConfig();
+    const cfg = await fetchConfig(true);
 
     let html = '';
     let currentGroup = '';
@@ -1724,7 +1735,7 @@ window.clearAppPhoto = function (num, origFileId) {
   const thumbImg = document.getElementById('thumb_img_' + num);
 
   if (origFileId && origFileId !== 'false' && origFileId !== 'undefined' && origFileId !== '') {
-    thumbImg.src = 'https://lh3.googleusercontent.com/d/' + origFileId;
+    thumbImg.src = toDriveImgSrc(origFileId);
     thumbContainer.style.display = 'inline-block';
     noThumbText.style.display = 'none';
   } else {
