@@ -285,7 +285,7 @@
     try {
       const links = await fetchSocialLinks();
       linkHost.innerHTML = links.map(l => `
-        <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" class="btn btn-outline-light rounded-pill btn-sm me-2 mb-2">
+        <a href="${escapeHtml(sanitizeUrl(l.url))}" target="_blank" rel="noopener" class="btn btn-outline-light rounded-pill btn-sm me-2 mb-2">
           <i class="bi ${escapeHtml(l.icon) || 'bi-link-45deg'} me-1"></i>${escapeHtml(l.label)}
         </a>`).join('');
     } catch (err) {
