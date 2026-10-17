@@ -184,7 +184,7 @@
 
     if (cfg.line_link) {
       document.querySelectorAll('.contact-line-link').forEach(el => {
-        el.href = cfg.line_link;
+        el.href = sanitizeUrl(cfg.line_link);
         if (cfg.line_desc) el.textContent = cfg.line_desc;
       });
     }
@@ -203,7 +203,7 @@
     const linkHost = document.getElementById('footer-links');
     if (linkHost) {
       linkHost.innerHTML = links.map(l => `
-        <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" class="btn btn-outline-light rounded-pill btn-sm me-2 mb-2">
+        <a href="${escapeHtml(sanitizeUrl(l.url))}" target="_blank" rel="noopener" class="btn btn-outline-light rounded-pill btn-sm me-2 mb-2">
           <i class="bi ${escapeHtml(l.icon) || 'bi-link-45deg'} me-1"></i>${escapeHtml(l.label)}
         </a>`).join('');
     }
@@ -221,8 +221,8 @@
       if (!qsError && qsApp) {
         document.getElementById('success-docno').textContent = qsApp.doc_no || '-';
         document.getElementById('success-summary').innerHTML = [
-          summaryRow('สมัครเรียน', `${qsApp.level} ${qsApp.branch}`),
-          summaryRow('ชื่อ-นามสกุล', `${qsApp.prefix}${qsApp.name} ${qsApp.lastname}`),
+          summaryRow('สมัครเรียน', `${escapeHtml(qsApp.level)} ${escapeHtml(qsApp.branch)}`),
+          summaryRow('ชื่อ-นามสกุล', `${escapeHtml(qsApp.prefix)}${escapeHtml(qsApp.name)} ${escapeHtml(qsApp.lastname)}`),
           summaryRow('สถานะ', statusLabel(qsApp.status)),
           summaryRow('ใบสมัคร', pdfActionBtn(qsApp)),
         ].join('');
@@ -304,10 +304,11 @@
 
   function renderExisting(app) {
     const dl = document.getElementById('existing-summary');
-    dl.innerHTML = summaryRow('เลขที่ใบสมัคร', app.doc_no) +
-      summaryRow('ระดับ/สาขา', `${app.level} ${app.branch}`) +
-      summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`) +
-      summaryRow('เบอร์โทร', app.student_phone ? app.student_phone.replace(/(\d{3})\d{4}(\d{3})/, '$1XXXX$2') : '-') +
+    const maskedPhone = app.student_phone ? String(app.student_phone).replace(/(\d{3})\d{4}(\d{3})/, '$1XXXX$2') : '-';
+    dl.innerHTML = summaryRow('เลขที่ใบสมัคร', escapeHtml(app.doc_no)) +
+      summaryRow('ระดับ/สาขา', `${escapeHtml(app.level)} ${escapeHtml(app.branch)}`) +
+      summaryRow('ชื่อ-นามสกุล', `${escapeHtml(app.prefix)}${escapeHtml(app.name)} ${escapeHtml(app.lastname)}`) +
+      summaryRow('เบอร์โทร', escapeHtml(maskedPhone)) +
       summaryRow('สถานะ', statusLabel(app.status)) +
       summaryRow('ใบสมัคร', pdfActionBtn(app, true));
 
@@ -335,18 +336,18 @@
     if (s === 'pending') badgeClass = 'bg-warning text-dark';
     else if (s === 'approved') badgeClass = 'bg-success';
     else if (s === 'rejected') badgeClass = 'bg-danger';
-    return `<span class="badge ${badgeClass} fs-6 px-3 py-2 shadow-sm">${text}</span>`;
+    return `<span class="badge ${badgeClass} fs-6 px-3 py-2 shadow-sm">${escapeHtml(text)}</span>`;
   }
 
   function pdfActionBtn(app, isExisting = false) {
     const linkId = isExisting ? 'existing-pdf-link' : 'success-pdf-link';
-    const href = app && app.pdf_url ? toViewDriveUrl(app.pdf_url) : '#';
+    const href = app && app.pdf_url ? escapeHtml(toViewDriveUrl(app.pdf_url)) : '#';
     const hideClass = (app && app.pdf_url) ? '' : ' d-none';
-    return `<a href="${href}" id="${linkId}" target="_blank" class="btn btn-danger btn-sm shadow-sm${hideClass}"><i class="bi bi-file-earmark-pdf me-1"></i>ดาวน์โหลดใบสมัคร PDF</a>`;
+    return `<a href="${href}" id="${linkId}" target="_blank" rel="noopener" class="btn btn-danger btn-sm shadow-sm${hideClass}"><i class="bi bi-file-earmark-pdf me-1"></i>ดาวน์โหลดใบสมัคร PDF</a>`;
   }
 
   function summaryRow(label, value) {
-    return `<dt class="col-5 text-muted">${label}</dt><dd class="col-7">${value ?? '-'}</dd>`;
+    return `<dt class="col-5 text-muted">${escapeHtml(label)}</dt><dd class="col-7">${value ?? '-'}</dd>`;
   }
 
   function renderPaymentBox(app, targetId) {
@@ -397,7 +398,7 @@
 
     const bankImgSrc = cfg.bank_account_image ? toDriveImgSrc(cfg.bank_account_image) : null;
     const bankHtml = bankImgSrc
-      ? `<img src="${bankImgSrc}" alt="Bank Card" class="img-fluid rounded-3 shadow-sm border bank-card-zoomable" onerror="this.style.display='none'" style="max-height:80px; object-fit:contain; background:#fff; cursor:zoom-in;">`
+      ? `<img src="${escapeHtml(bankImgSrc)}" alt="Bank Card" class="img-fluid rounded-3 shadow-sm border bank-card-zoomable" onerror="this.style.display='none'" style="max-height:80px; object-fit:contain; background:#fff; cursor:zoom-in;">`
       : '<i class="bi bi-credit-card-2-front display-4 text-muted"></i>';
 
     const hasGlobalDiscount = (app.level === 'ปวช.' && String(cfg.pvc_discount_active).toUpperCase() === 'TRUE') ||
@@ -440,13 +441,13 @@
         
         ${(() => {
           const lineLinkObj = socialLinks.find(l => (l.icon || '').toLowerCase().includes('line') || (l.label || '').toLowerCase().includes('line') || (l.url || '').toLowerCase().includes('line.me'));
-          const lineUrl = lineLinkObj ? lineLinkObj.url : '#';
-          const lineLabel = lineLinkObj ? lineLinkObj.label : '';
+          const lineUrl = lineLinkObj ? escapeHtml(sanitizeUrl(lineLinkObj.url)) : '#';
+          const lineLabel = lineLinkObj ? escapeHtml(lineLinkObj.label) : '';
           return `
             <div class="text-center rounded-3 p-3 bg-white border">
             <p class="mb-2"><strong><i class="bi bi-clipboard-check-fill text-success"></i> สอบถามจำนวนเงิน ก่อนการโอนชำระ </strong></p>
               <p class="mb-2"><strong><i class="bi bi-clipboard-check-fill text-success"></i> ส่งสลิปแจ้งการโอนเงินได้ที่</strong></p>
-              <a href="${lineUrl}" target="_blank" class="d-inline-block transition-hover">
+              <a href="${lineUrl}" target="_blank" rel="noopener" class="d-inline-block transition-hover">
                 <img src="https://scdn.line-apps.com/n/line_add_friends/btn/th.png" alt="เพิ่มเพื่อน LINE" height="36" class="shadow-sm rounded">
                 &nbsp; ${lineLabel}
               </a>
@@ -462,7 +463,7 @@
       if (slips.length > 0) {
         const slipsHtml = slips.map(slipId =>
           `<div class="col-6 col-md-4 mb-3">
-                    <img src="${toDriveImgSrc(slipId)}" class="img-fluid rounded shadow-sm border slip-zoomable" style="cursor:zoom-in; object-fit: cover; height: 150px; width: 100%;" alt="Payment Slip">
+                    <img src="${escapeHtml(toDriveImgSrc(slipId))}" class="img-fluid rounded shadow-sm border slip-zoomable" style="cursor:zoom-in; object-fit: cover; height: 150px; width: 100%;" alt="Payment Slip">
                  </div>`
         ).join('');
         paymentHtml = `
@@ -480,8 +481,8 @@
 
       ${(() => {
         const fbLinkObj = socialLinks.find(l => (l.icon || '').toLowerCase().includes('facebook') || (l.label || '').toLowerCase().includes('facebook') || (l.url || '').toLowerCase().includes('facebook.com'));
-        const fbUrl = fbLinkObj ? fbLinkObj.url : '#';
-        const fbLabel = fbLinkObj ? (fbLinkObj.label || 'เพจวิทยาลัย') : 'แฟนเพจวิทยาลัย';
+        const fbUrl = fbLinkObj ? escapeHtml(sanitizeUrl(fbLinkObj.url)) : '#';
+        const fbLabel = fbLinkObj ? escapeHtml(fbLinkObj.label || 'เพจวิทยาลัย') : 'แฟนเพจวิทยาลัย';
         return `
           <div class="card mt-4 border-0 rounded-4 overflow-hidden shadow-sm position-relative" style="background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);">
             <div class="position-absolute top-0 start-0 w-100 h-100" style="background: url('data:image/svg+xml,%3Csvg width=\\'60\\' height=\\'60\\' viewBox=\\'0 0 60 60\\' xmlns=\\'http://www.w3.org/2000/svg\\'><g fill=\\'none\\' fill-rule=\\'evenodd\\'><g fill=\\'%230866ff\\' fill-opacity=\\'0.04\\'><path d=\\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\\'/></g></g></svg>'); opacity: 0.8;"></div>
@@ -494,7 +495,7 @@
                   <h6 class="fw-bold mb-1" style="color: #0b3d91;">ประกาศกำหนดการรายงานตัว</h6>
                   <p class="text-center mb-0 text-dark small" style="line-height: 1.6;">
                     กำหนดการ <strong>วันรายงานตัว</strong> และ <strong>วันเปิดเรียน</strong> จะแจ้งให้ทราบทางเพจวิทยาลัย<br>
-                    ติดตามข่าวสารได้ที่ <a href="${fbUrl}" target="_blank" class="btn btn-sm btn-primary rounded-pill  px-2 fw-medium shadow-sm transition-hover">
+                    ติดตามข่าวสารได้ที่ <a href="${fbUrl}" target="_blank" rel="noopener" class="btn btn-sm btn-primary rounded-pill  px-2 fw-medium shadow-sm transition-hover">
                       <i class="bi bi-facebook me-1"></i>  ${fbLabel}
                     </a>
                   </p>
@@ -587,7 +588,7 @@
       const sel = document.getElementById('branch_select');
       sel.disabled = false;
       sel.innerHTML = `<option value="">— เลือกสาขาวิชา —</option>` +
-        branchesByLevel[level].map(b => `<option value="${b.id}">${branchDisplayName(b)}</option>`).join('');
+        branchesByLevel[level].map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(branchDisplayName(b))}</option>`).join('');
       selectedBranch = null;
       document.getElementById('branch_price_box').innerHTML = '';
       updateSelectionSummary(level, null);
@@ -639,8 +640,8 @@
       box.innerHTML = '';
       return;
     }
-    const levelText = level || '...';
-    const branchText = branch ? branchDisplayName(branch) : '<span class="opacity-75">ยังไม่ได้เลือก</span>';
+    const levelText = escapeHtml(level || '...');
+    const branchText = branch ? escapeHtml(branchDisplayName(branch)) : '<span class="opacity-75">ยังไม่ได้เลือก</span>';
     box.innerHTML = `
       <div class="selection-summary-block">
         <div class="selection-summary-icon">
@@ -953,17 +954,18 @@
 
   function renderConfirm(p) {
     const dl = document.getElementById('confirm-summary');
+    const addrStr = [p.house_no, p.village_no && ('หมู่ ' + p.village_no), p.village, p.district, p.amphoe, p.province, p.zipcode].filter(Boolean).join(' ');
     dl.innerHTML = [
-      summaryRow('สมัครเรียน', `${p.level} ${p.branch}`),
-      summaryRow('ชื่อ-นามสกุล', `${p.prefix}${p.name} ${p.lastname} (${p.nickname || '-'})`),
-      summaryRow('เลขประจำตัวประชาชน', p.idcard),
-      summaryRow('วันเกิด', p.birthday),
-      summaryRow('เบอร์โทร', p.student_phone),
-      summaryRow('E-mail', p.student_email),
-      summaryRow('สถานศึกษาเดิม', `${p.school} (${p.school_province})`),
-      summaryRow('ที่อยู่', [p.house_no, p.village_no && ('หมู่ ' + p.village_no), p.village, p.district, p.amphoe, p.province, p.zipcode].filter(Boolean).join(' ')),
-      summaryRow('ผู้ปกครอง', p.parent || p.father || p.mother || '-'),
-      summaryRow('ทราบข้อมูลจาก', p.info_source),
+      summaryRow('สมัครเรียน', `${escapeHtml(p.level)} ${escapeHtml(p.branch)}`),
+      summaryRow('ชื่อ-นามสกุล', `${escapeHtml(p.prefix)}${escapeHtml(p.name)} ${escapeHtml(p.lastname)} (${escapeHtml(p.nickname || '-')})`),
+      summaryRow('เลขประจำตัวประชาชน', escapeHtml(p.idcard)),
+      summaryRow('วันเกิด', escapeHtml(p.birthday)),
+      summaryRow('เบอร์โทร', escapeHtml(p.student_phone)),
+      summaryRow('E-mail', escapeHtml(p.student_email)),
+      summaryRow('สถานศึกษาเดิม', `${escapeHtml(p.school)} (${escapeHtml(p.school_province)})`),
+      summaryRow('ที่อยู่', escapeHtml(addrStr)),
+      summaryRow('ผู้ปกครอง', escapeHtml(p.parent || p.father || p.mother || '-')),
+      summaryRow('ทราบข้อมูลจาก', escapeHtml(p.info_source)),
       summaryRow('เอกสารแนบ', `<div class="d-flex flex-wrap gap-3">${buildAttachmentThumbsHtml()}</div>`),
     ].join('');
 
@@ -990,14 +992,14 @@
       if (imgEl) {
         html += `
           <div class="confirm-attach-thumb">
-            <img src="${imgEl.src}" alt="${label}" class="confirm-thumb-img confirm-thumb-zoomable" title="คลิกเพื่อดูรูปขนาดเต็ม">
-            <div class="confirm-thumb-label">${label}</div>
+            <img src="${escapeHtml(imgEl.src)}" alt="${escapeHtml(label)}" class="confirm-thumb-img confirm-thumb-zoomable" title="คลิกเพื่อดูรูปขนาดเต็ม">
+            <div class="confirm-thumb-label">${escapeHtml(label)}</div>
           </div>`;
       } else {
         html += `
           <div class="confirm-attach-thumb">
             <div class="confirm-thumb-icon"><i class="bi bi-file-earmark-pdf-fill"></i></div>
-            <div class="confirm-thumb-label">${label}</div>
+            <div class="confirm-thumb-label">${escapeHtml(label)}</div>
           </div>`;
       }
     });
@@ -1025,27 +1027,24 @@
         }
       }
 
+      if (!recaptchaToken) {
+        throw new Error('ไม่สามารถยืนยันตัวตนด้วย reCAPTCHA ได้ กรุณารีเฟรชหน้าเว็บแล้วลองใหม่อีกครั้ง');
+      }
+
       showLoader('กำลังบันทึกใบสมัคร...');
       let data, error;
 
-      if (recaptchaToken) {
-        // ส่งยิงผ่าน Edge Function ที่มีระบบป้องกัน Bot 
-        const res = await sb.functions.invoke('submit-application', {
-          body: { token: recaptchaToken, p: pendingPayload }
-        });
+      // ส่งยิงผ่าน Edge Function ที่มีระบบป้องกัน Bot และการตรวจสอบข้อมูลฝั่งเซิร์ฟเวอร์เสมอ
+      const res = await sb.functions.invoke('submit-application', {
+        body: { token: recaptchaToken, p: pendingPayload }
+      });
 
-        if (res.error) {
-          error = res.error;
-        } else if (res.data && res.data.error) {
-          error = new Error(res.data.error);
-        } else {
-          data = res.data?.data;
-        }
+      if (res.error) {
+        error = res.error;
+      } else if (res.data && res.data.error) {
+        error = new Error(res.data.error);
       } else {
-        // Fallback กรณีที่ยังไม่ได้เปลี่ยน Site Key หรือ Google โหลดไม่ขึ้น เพื่อให้ระบบยังรับสมัครได้
-        const rpcRes = await sb.rpc('submit_application', { p: pendingPayload });
-        data = rpcRes.data;
-        error = rpcRes.error;
+        data = res.data?.data;
       }
 
       if (error) throw error;
@@ -1059,23 +1058,23 @@
 
       const app = data.data;
 
-      // showLoader('กำลังสร้างลิงก์รายละเอียดส่วนตัว...');
-      try {
-        const { data: uidData, error: uidError } = await sb.functions.invoke('generate-uid', {
-          body: { appId: app.id }
-        });
+      if (!app.uid) {
+        try {
+          const { data: uidData, error: uidError } = await sb.functions.invoke('generate-uid', {
+            body: { appId: app.id }
+          });
 
-        if (uidError) throw uidError;
-        if (uidData && uidData.error) throw new Error(uidData.error);
-        if (uidData && uidData.uid) {
-          app.uid = uidData.uid;
-        } else {
-          throw new Error('ไม่พบข้อมูล UID ใน response');
+          if (uidError) throw uidError;
+          if (uidData && uidData.error) throw new Error(uidData.error);
+          if (uidData && uidData.uid) {
+            app.uid = uidData.uid;
+          } else {
+            throw new Error('ไม่พบข้อมูล UID ใน response');
+          }
+        } catch (err) {
+          console.error('UID Generation Error:', err);
+          showToast('แจ้งเตือน (แอดมิน): การสร้าง UID ล้มเหลว กรุณาตรวจสอบ Edge Function - ' + (err.message || String(err)), 'danger');
         }
-      } catch (err) {
-        console.error('UID Generation Error:', err);
-        showToast('แจ้งเตือน (แอดมิน): การสร้าง UID ล้มเหลว กรุณาตรวจสอบ Edge Function - ' + (err.message || String(err)), 'danger');
-        // เรายังคงปล่อยให้ทำงานต่อ แต่จะไม่ระบุ uid (fallback ไปใช้ id แทน)
       }
 
       showLoader('กำลังสร้างไฟล์ใบสมัคร PDF...');
@@ -1112,8 +1111,8 @@
       hideLoader();
       document.getElementById('success-docno').textContent = app.doc_no;
       document.getElementById('success-summary').innerHTML = [
-        summaryRow('สมัครเรียน', `${app.level} ${app.branch}`),
-        summaryRow('ชื่อ-นามสกุล', `${app.prefix}${app.name} ${app.lastname}`),
+        summaryRow('สมัครเรียน', `${escapeHtml(app.level)} ${escapeHtml(app.branch)}`),
+        summaryRow('ชื่อ-นามสกุล', `${escapeHtml(app.prefix)}${escapeHtml(app.name)} ${escapeHtml(app.lastname)}`),
         summaryRow('สถานะ', statusLabel(app.status)),
         summaryRow('ใบสมัคร', pdfActionBtn(Object.assign({}, app, { pdf_url: pdfUrl }))),
       ].join('');
