@@ -6,22 +6,43 @@ function escapeHtml(s) {
   ));
 }
 
+function sanitizeUrl(url) {
+  if (!url) return '';
+  const trimmed = String(url).trim();
+  if (/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(trimmed)) {
+    return trimmed;
+  }
+  return '#';
+}
+
+function isValidDriveId(id) {
+  return /^[a-zA-Z0-9_-]{10,80}$/.test(String(id || '').trim());
+}
+
 function toViewDriveUrl(fileId) {
   if (!fileId) return '';
-  return `https://drive.google.com/file/d/${fileId}/view`;
+  const cleanId = String(fileId).trim();
+  if (cleanId.startsWith('http://') || cleanId.startsWith('https://')) {
+    return sanitizeUrl(cleanId);
+  }
+  if (!isValidDriveId(cleanId)) return '';
+  return `https://drive.google.com/file/d/${encodeURIComponent(cleanId)}/view`;
 }
 
 function toDriveImgSrc(urlOrId) {
   if (!urlOrId) return '';
-  if (urlOrId.startsWith('http')) return urlOrId;
-  return `https://lh3.googleusercontent.com/d/${urlOrId}`;
+  const clean = String(urlOrId).trim();
+  if (clean.startsWith('http://') || clean.startsWith('https://')) return sanitizeUrl(clean);
+  if (!isValidDriveId(clean)) return '';
+  return `https://lh3.googleusercontent.com/d/${encodeURIComponent(clean)}`;
 }
 
 function extractYouTubeId(urlOrId) {
   if (!urlOrId) return '';
-  if (urlOrId.length === 11 && !urlOrId.includes('/')) return urlOrId;
-  const match = urlOrId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^"&?/\s]{11})/);
-  return match ? match[1] : urlOrId;
+  const clean = String(urlOrId).trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) return clean;
+  const match = clean.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([a-zA-Z0-9_-]{11})/);
+  return match ? match[1] : '';
 }
 
 async function fetchAsBlobSafe(fileIdOrUrl) {
@@ -90,12 +111,19 @@ function hideLoader() {
   if (el) el.classList.add('hidden');
 }
 
-async function fetchConfig() {
+async function fetchConfig(includeSensitive = false) {
   try {
-    const { data, error } = await sb.from('config').select('key,value');
+    let q = sb.from('config').select('key,value');
+    if (!includeSensitive) {
+      q = q.not('key', 'in', '("line_access_token","line_group_id")');
+    }
+    const { data, error } = await q;
     if (error) { console.error('fetchConfig:', error); return {}; }
     const map = {};
-    (data || []).forEach(r => map[r.key] = r.value);
+    (data || []).forEach(r => {
+      if (!includeSensitive && (r.key === 'line_access_token' || r.key === 'line_group_id')) return;
+      map[r.key] = r.value;
+    });
     return map;
   } catch (err) {
     console.error('fetchConfig threw:', err);
