@@ -1084,7 +1084,7 @@
       const isEmailEnabled = (cfg.enable_send_email === undefined) ? true : String(cfg.enable_send_email).toUpperCase() === 'TRUE';
       if (app.student_email && isEmailEnabled) {
         try {
-          const currentUrl = window.location.origin + window.location.pathname.replace(/\/apply\.html$/, '');
+          const currentUrl = window.location.origin + window.location.pathname.replace(/\.html$/, '').replace(/\/+$/, '');
           const { error: emailError } = await sb.functions.invoke('send-confirmation-email', {
             body: {
               app: { ...app, pdf_url: pdfUrl },
