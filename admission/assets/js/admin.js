@@ -6,8 +6,15 @@
 
   async function init() {
     const { data: { session } } = await sb.auth.getSession();
-    if (session) enterApp();
-    else document.getElementById('admin-login').classList.remove('d-none');
+    if (session) {
+      const { data: { user }, error } = await sb.auth.getUser();
+      if (!error && user) {
+        enterApp();
+        return;
+      }
+      await sb.auth.signOut();
+    }
+    document.getElementById('admin-login').classList.remove('d-none');
   }
 
   document.getElementById('form-admin-login').addEventListener('submit', async (e) => {
@@ -698,10 +705,11 @@
         const f2File = document.getElementById('edit_file2').files[0];
         const f3File = document.getElementById('edit_file3').files[0];
 
+        const ownerRef = { idcard: app.idcard, uid: app.uid };
         const [photoBlob, doc1Blob, doc2Blob] = await Promise.all([
-          f1File ? new Blob([await f1File.arrayBuffer()], { type: f1File.type }) : fetchAsBlobSafe(app.file1),
-          f2File ? new Blob([await f2File.arrayBuffer()], { type: f2File.type }) : fetchAsBlobSafe(app.file2),
-          f3File ? new Blob([await f3File.arrayBuffer()], { type: f3File.type }) : fetchAsBlobSafe(app.file3),
+          f1File ? new Blob([await f1File.arrayBuffer()], { type: f1File.type }) : fetchAsBlobSafe(app.file1, ownerRef),
+          f2File ? new Blob([await f2File.arrayBuffer()], { type: f2File.type }) : fetchAsBlobSafe(app.file2, ownerRef),
+          f3File ? new Blob([await f3File.arrayBuffer()], { type: f3File.type }) : fetchAsBlobSafe(app.file3, ownerRef),
         ]);
 
         const cfg = await fetchConfig();
