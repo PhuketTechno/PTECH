@@ -553,10 +553,11 @@
     btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>กำลังสร้าง PDF...`;
     errorBox.classList.add('d-none');
     try {
+      const ownerRef = { idcard: app.idcard, uid: app.uid };
       const [photoBlob, doc1Blob, doc2Blob] = await Promise.all([
-        fetchAsBlobSafe(app.file1),
-        fetchAsBlobSafe(app.file2),
-        fetchAsBlobSafe(app.file3),
+        fetchAsBlobSafe(app.file1, ownerRef),
+        fetchAsBlobSafe(app.file2, ownerRef),
+        fetchAsBlobSafe(app.file3, ownerRef),
       ]);
       const pdfUrl = await buildAndUploadPdf(app, photoBlob, doc1Blob, doc2Blob);
       link.href = toViewDriveUrl(pdfUrl);
@@ -1138,16 +1139,23 @@
     const idcard = path.split('/')[0];
     const filename = path.split('/').slice(1).join('/') || path;
 
-    const form = new FormData();
-    form.append('file', new Blob([bytes], { type: contentType }), filename);
-    form.append('idcard', idcard);
-    form.append('filename', filename);
-
     let fileId = null;
     let retries = 3;
     let lastErr = null;
     while (retries > 0 && !fileId) {
       try {
+        const form = new FormData();
+        form.append('file', new Blob([bytes], { type: contentType }), filename);
+        form.append('idcard', idcard);
+        form.append('filename', filename);
+        if (typeof grecaptcha !== 'undefined') {
+          try {
+            const recaptchaToken = await grecaptcha.execute('6LcKuNotAAAAAN3yxsHVEWouqwHbfyHRF5dS_Kz7', { action: 'upload_media' });
+            if (recaptchaToken) form.append('token', recaptchaToken);
+          } catch (e) {
+            console.warn('reCAPTCHA execute for upload failed:', e);
+          }
+        }
         const { data, error } = await sb.functions.invoke('upload-media', { body: form });
         if (error) throw error;
         if (data && data.error) throw new Error(data.error);
