@@ -199,7 +199,7 @@
 
   function pdfStatusBadge(app) {
     if (app.pdf_url) {
-      return `<span class="badge text-bg-success">พร้อมแล้ว</span> <a href="${escapeHtml(toViewDriveUrl(app.pdf_url))}" target="_blank" rel="noopener">เปิดไฟล์ PDF</a>`;
+      return `<span class="badge text-bg-success">พร้อมแล้ว</span> <a href="${escapeHtml(toViewDriveUrl(app.pdf_url))}" target="_blank" rel="noopener" class="d-inline-flex align-items-center" title="เปิดไฟล์ PDF"><img src="https://lh3.googleusercontent.com/d/1qeLVRMgBUXEWn-1PIBRVk0Z9BS0DOSlW" alt="เปิดไฟล์ PDF" style="height: 32px; width: auto; vertical-align: middle;"></a>`;
     }
     return `<span class="badge text-bg-secondary">ยังไม่มีไฟล์</span>`;
   }
@@ -411,9 +411,6 @@
                 ${fileInputHtml(2, 'เอกสาร 1 (สำเนาบัตรประชาชน)', app.file2)}
                 ${fileInputHtml(3, 'เอกสาร 2 (สำเนาทะเบียนบ้าน)', app.file3)}
               </div>
-              <div class="mt-3 pt-3 border-top d-flex flex-column gap-2">
-                <div><strong>สถานะใบสมัคร PDF:</strong> <span id="modal_pdf_status" class="ms-2">${pdfStatusBadge(app)}</span></div>
-              </div>
             </div>
 
             <div class="text-end">
@@ -502,35 +499,17 @@
     const footer = document.getElementById('appModalFooter');
     const detailQuery = app.uid ? `uid=${encodeURIComponent(app.uid)}` : `id=${encodeURIComponent(app.id)}`;
     footer.innerHTML = `
-      <div class="d-flex gap-2 me-auto">
+      <div class="d-flex align-items-center gap-3 me-auto flex-wrap">
         <a href="../apply.html?${escapeHtml(detailQuery)}" target="_blank" rel="noopener" class="btn btn-outline-primary">
-          <i class="bi bi-box-arrow-up-right me-1"></i> หน้ารายละเอียดผู้สมัคร
-        </a>
-        <button type="button" class="btn btn-outline-secondary" id="btnCopyDirectLink" title="คัดลอกลิงก์">
-          <i class="bi bi-copy"></i>
-        </button>
+           รายละเอียดผู้สมัคร  &nbsp;&nbsp;<i class="bi bi-box-arrow-up-right me-1"></i>
+        </a> ::: 
+        <div class="d-flex align-items-center gap-2">
+          <strong>ใบสมัคร PDF:</strong>
+          <span id="modal_pdf_status" class="d-inline-flex align-items-center gap-2">${pdfStatusBadge(app)}</span>
+        </div>
       </div>
       <button class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิดหน้าต่าง</button>
     `;
-
-    document.getElementById('btnCopyDirectLink').addEventListener('click', () => {
-      if (!app.uid) {
-        showToast('ใบสมัครนี้ยังไม่มีรหัส UID กรุณากดบันทึกเพื่อสร้าง UID ก่อนแชร์ลิงก์', 'warning');
-        return;
-      }
-      const fullUrl = new URL(`../apply.html?uid=${encodeURIComponent(app.uid)}`, window.location.href).href;
-      navigator.clipboard.writeText(fullUrl).then(() => {
-        if (typeof showToast === 'function') {
-          showToast('คัดลอกลิงก์สำเร็จ', 'success');
-        } else {
-          alert('คัดลอกลิงก์สำเร็จ');
-        }
-      }).catch(err => {
-        if (typeof showToast === 'function') {
-          showToast('ไม่สามารถคัดลอกลิงก์ได้', 'danger');
-        }
-      });
-    });
 
     body.querySelectorAll('.delete-slip-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -739,7 +718,8 @@
         if (error) throw error;
 
         showToast('บันทึกข้อมูลและสร้าง PDF ใหม่เรียบร้อย', 'success');
-        document.getElementById('modal_pdf_status').innerHTML = pdfStatusBadge(app);
+        const pdfStatusEl = document.getElementById('modal_pdf_status');
+        if (pdfStatusEl) pdfStatusEl.innerHTML = pdfStatusBadge(app);
 
 
         ['file1', 'file2', 'file3'].forEach(f => {
@@ -1556,153 +1536,6 @@ if (btnConfirmSlip) {
   });
 }
 
-
-const csvInput = document.getElementById('csvFileInput');
-if (csvInput) {
-  csvInput.addEventListener('change', function (e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (!confirm(`คุณต้องการนำเข้าข้อมูลจากไฟล์ ${file.name} ใช่หรือไม่?\n\n(หากบัตรประชาชนซ้ำ จะอัปเดตข้อมูลเดิม)`)) {
-      csvInput.value = '';
-      return;
-    }
-
-    showToast('กำลังวิเคราะห์ไฟล์ CSV...', 'info');
-
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async function (results) {
-        try {
-          const rows = results.data;
-          if (rows.length === 0) {
-            showToast('ไม่พบข้อมูลในไฟล์ CSV', 'danger');
-            return;
-          }
-
-          const { data: branches } = await sb.from('branches').select('id, name, level');
-          const branchMap = {};
-          if (branches) {
-            branches.forEach(b => {
-              branchMap[`${b.level}_${b.name}`] = b.id;
-            });
-          }
-
-          showToast(`พบข้อมูล ${rows.length} รายการ กำลังอัปโหลด...`, 'info');
-
-          let success = 0;
-          let errors = 0;
-
-          for (let row of rows) {
-            let level = 'ปวช.';
-            let branchName = row.reg_branch_selected || '';
-
-            if (branchName.startsWith('ปวส.')) {
-              level = 'ปวส.';
-              branchName = branchName.replace('ปวส.', '').trim();
-            } else if (branchName.startsWith('ปวช.')) {
-              level = 'ปวช.';
-              branchName = branchName.replace('ปวช.', '').trim();
-            }
-
-            const branchId = branchMap[`${level}_${branchName}`] || null;
-
-            let createdAt = new Date();
-            if (row.timestamp && row.timestamp.trim() !== '') {
-              const parsedDate = new Date(row.timestamp);
-              if (!isNaN(parsedDate)) createdAt = parsedDate;
-            }
-
-            let parsedBirthday = null;
-            if (row.birthday && row.birthday.trim() !== '') {
-              parsedBirthday = row.birthday.trim();
-            }
-
-            if (!row.idcard || row.idcard.trim() === '') {
-              errors++;
-              continue;
-            }
-
-            const payload = {
-              doc_no: row.doc_no || null,
-              created_at: createdAt.toISOString(),
-              level: level,
-              branch: branchName,
-              branch_id: branchId,
-              prefix: row.prefix || '',
-              name: row.name || '',
-              lastname: row.lastname || '',
-              nickname: row.nickname || null,
-              birthday: parsedBirthday,
-              idcard: row.idcard.trim(),
-              race: row.race || null,
-              nationality: row.nationality || null,
-              religion: row.religion || null,
-              weight: (row.weight && !isNaN(row.weight)) ? parseFloat(row.weight) : null,
-              height: (row.height && !isNaN(row.height)) ? parseFloat(row.height) : null,
-              student_phone: row.student_phone || null,
-              student_email: row.student_email || null,
-              student_lineid: row.student_lineid || null,
-              old_grad: row.old_grad || null,
-              old_grad_year: row.old_grad_year || null,
-              school: row.school || null,
-              school_province: row.schoolProvince || row.school_province || null,
-              house_no: row.house_no || null,
-              village_no: row.village_no || null,
-              village: row.village || null,
-              road: row.road || null,
-              alley: row.alley || null,
-              district: row.district || null,
-              amphoe: row.amphoe || null,
-              province: row.province || null,
-              zipcode: row.zipcode || null,
-              father: row.father || null,
-              father_occupation: row.father_occupation || null,
-              father_phone: row.father_phone || null,
-              mother: row.mother || null,
-              mother_occupation: row.mother_occupation || null,
-              mother_phone: row.mother_phone || null,
-              parent: row.parent || null,
-              parent_occupation: row.parent_occupation || null,
-              parent_phone: row.parent_phone || null,
-              parent_relationship: row.parent_relationship || null,
-              info_source: row.info_source || null,
-              file1: row.file1 || null,
-              file2: row.file2 || null,
-              file3: row.file3 || null,
-              status: 'pending'
-            };
-
-            if (row.status && ['pending', 'approved', 'rejected'].includes(row.status.toLowerCase())) {
-              payload.status = row.status.toLowerCase();
-            }
-
-            const { error } = await sb.from('applications').upsert(payload, { onConflict: 'idcard' });
-            if (error) {
-              console.error('Import error on idcard:', row.idcard, error, payload);
-              errors++;
-            } else {
-              success++;
-            }
-          }
-
-          showToast(`นำเข้าสำเร็จ ${success} รายการ, สร้างไม่ได้ ${errors} รายการ`, success > 0 ? 'success' : 'warning');
-          csvInput.value = '';
-          if (typeof loadApplications === 'function') loadApplications(true);
-
-        } catch (err) {
-          console.error(err);
-          showToast('เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'danger');
-        }
-      },
-      error: function (err) {
-        console.error(err);
-        showToast('เกิดข้อผิดพลาดในการอ่านไฟล์ CSV', 'danger');
-      }
-    });
-  });
-}
 
 
 window.activePhotoSlot = null;
