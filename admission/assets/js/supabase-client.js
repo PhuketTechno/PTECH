@@ -10,7 +10,7 @@ function sanitizeUrl(url) {
   if (!url) return '';
   const trimmed = String(url).trim();
   if (/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(trimmed)) {
-    return trimmed;
+    return trimmed.replace(/['"()\\]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
   }
   return '#';
 }
@@ -45,14 +45,21 @@ function extractYouTubeId(urlOrId) {
   return match ? match[1] : '';
 }
 
-async function fetchAsBlobSafe(fileIdOrUrl) {
+async function fetchAsBlobSafe(fileIdOrUrl, ownerRef = null) {
   if (!fileIdOrUrl) return null;
   let fileId = fileIdOrUrl.trim();
   const driveMatch = fileId.match(/(?:(?:\/d\/)|(?:[?&]id=))([a-zA-Z0-9_-]{25,})/);
   if (driveMatch && driveMatch[1]) fileId = driveMatch[1];
+  const reqBody = { mode: 'fetch_file', fileId: fileId };
+  if (typeof ownerRef === 'string' && ownerRef) {
+    reqBody.idcard = ownerRef;
+  } else if (ownerRef && typeof ownerRef === 'object') {
+    if (ownerRef.idcard) reqBody.idcard = ownerRef.idcard;
+    if (ownerRef.uid) reqBody.uid = ownerRef.uid;
+  }
   try {
     const { data, error } = await sb.functions.invoke('fetch-file', {
-      body: { mode: 'fetch_file', fileId: fileId },
+      body: reqBody,
     });
     if (!error && data && data.base64) {
       const binaryStr = atob(data.base64);
