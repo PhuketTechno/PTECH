@@ -150,6 +150,18 @@
     }
   });
 
+  async function ensureBranchesLoaded() {
+    if (branchesCache['ปวช.'].length > 0 || branchesCache['ปวส.'].length > 0) return;
+    try {
+      const { data, error } = await sb.from('branches').select('*').order('level').order('sort_order');
+      if (error) throw error;
+      branchesCache['ปวช.'] = (data || []).filter(b => b.level === 'ปวช.');
+      branchesCache['ปวส.'] = (data || []).filter(b => b.level === 'ปวส.');
+    } catch (err) {
+      console.error('ensureBranchesLoaded failed:', err);
+    }
+  }
+
   async function loadApplications(keepPage = false) {
     let currentPage = 0;
     if (keepPage && dt) {
@@ -162,7 +174,10 @@
 
     let data;
     try {
-      const res = await sb.from('applications').select('*').order('created_at', { ascending: false });
+      const [res] = await Promise.all([
+        sb.from('applications').select('*').order('created_at', { ascending: false }),
+        ensureBranchesLoaded(),
+      ]);
       if (res.error) throw res.error;
       data = res.data || [];
     } catch (err) {
@@ -254,9 +269,33 @@
     return thDateStr;
   };
 
-  function openAppModal(app) {
+  async function openAppModal(app) {
     window.slipDataTransfer = new DataTransfer();
     if (!app) return;
+    await ensureBranchesLoaded();
+
+    function getBranchOptions(level, currentBranch) {
+      const activeBranches = (branchesCache[level] || []).filter(b => b.active !== false);
+      const opts = [{ v: '', l: '— เลือกสาขาวิชา —', disabled: true }];
+      const seen = new Set(['']);
+      activeBranches.forEach(b => {
+        const name = branchDisplayName(b);
+        if (!seen.has(name)) {
+          seen.add(name);
+          opts.push({ v: name, l: name });
+        }
+      });
+      if (currentBranch && !seen.has(currentBranch) && level === app.level) {
+        opts.push({ v: currentBranch, l: currentBranch });
+      }
+      return opts;
+    }
+
+    function renderSelectOptions(options, selectedVal) {
+      return options.map(o =>
+        `<option value="${escapeHtml(o.v)}" ${o.disabled ? 'disabled' : ''} ${o.v === selectedVal ? 'selected' : ''}>${escapeHtml(o.l)}</option>`
+      ).join('');
+    }
 
     function fg(id, label, val, type = "text", xtra = "") {
       return `<div class="col-sm-6 mb-2">
@@ -266,14 +305,9 @@
     }
 
     function fgs(id, label, val, options) {
-      let html = `<div class="col-sm-6 mb-2">
+      return `<div class="col-sm-6 mb-2">
         <label class="form-label small text-muted mb-1">${escapeHtml(label)}</label>
-        <select class="form-select form-select-sm" id="edit_${id}">`;
-      options.forEach(o => {
-        html += `<option value="${escapeHtml(o.v)}" ${o.v === val ? 'selected' : ''}>${escapeHtml(o.l)}</option>`;
-      });
-      html += `</select></div>`;
-      return html;
+        <select class="form-select form-select-sm" id="edit_${id}">${renderSelectOptions(options, val)}</select></div>`;
     }
 
     function fileInputHtml(num, label, fileId) {
@@ -327,7 +361,7 @@
                 ${fg('doc_no', 'เลขที่ใบสมัคร', app.doc_no, 'text', 'disabled')}
                 ${fg('idcard', 'เลขบัตรประชาชน', app.idcard, 'text', 'readonly')}
                 ${fgs('level', 'ระดับชั้น', app.level, [{ v: 'ปวช.', l: 'ปวช.' }, { v: 'ปวส.', l: 'ปวส.' }])}
-                ${fg('branch', 'สาขาวิชา (พิมพ์ชื่อเต็ม)', app.branch)}
+                ${fgs('branch', 'สาขาวิชา', app.branch || '', getBranchOptions(app.level || 'ปวช.', app.branch || ''))}
                 ${fgs('info_source', 'ทราบข้อมูลจาก', app.info_source, [
       { v: 'ครูจากวิทยาลัยที่มาแนะแนว', l: 'ครูจากวิทยาลัยที่มาแนะแนว' },
       { v: 'ครูแนะแนวที่โรงเรียนเดิม', l: 'ครูแนะแนวที่โรงเรียนเดิม' },
@@ -484,6 +518,22 @@
       </form>`;
 
 
+    const editLevelSel = document.getElementById('edit_level');
+    const editBranchSel = document.getElementById('edit_branch');
+    if (editLevelSel && editBranchSel) {
+      editLevelSel.addEventListener('change', () => {
+        const prevBranch = editBranchSel.value;
+        const opts = getBranchOptions(editLevelSel.value, app.branch || '');
+        let nextVal = '';
+        if (prevBranch && opts.some(o => o.v === prevBranch)) {
+          nextVal = prevBranch;
+        } else if (editLevelSel.value === app.level && app.branch && opts.some(o => o.v === app.branch)) {
+          nextVal = app.branch;
+        }
+        editBranchSel.innerHTML = renderSelectOptions(opts, nextVal);
+      });
+    }
+
     if (typeof flatpickr !== 'undefined') {
       flatpickr("#edit_birthday", {
         locale: "th",
@@ -615,12 +665,20 @@
     body.querySelector('#modal_save_pdf').addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       const originalHtml = btn.innerHTML;
+      const selectedLevel = document.getElementById('edit_level').value.trim();
+      const selectedBranch = document.getElementById('edit_branch').value.trim();
+      if (!selectedBranch) {
+        showToast('กรุณาเลือกสาขาวิชา', 'danger');
+        return;
+      }
+      const matchedBranch = (branchesCache[selectedLevel] || []).find(b => branchDisplayName(b) === selectedBranch);
       btn.disabled = true;
       btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึกและสร้าง PDF...`;
       try {
         const payload = {
-          level: document.getElementById('edit_level').value.trim(),
-          branch: document.getElementById('edit_branch').value.trim(),
+          level: selectedLevel,
+          branch: selectedBranch,
+          ...(matchedBranch ? { branch_id: matchedBranch.id } : {}),
           prefix: document.getElementById('edit_prefix').value.trim(),
           name: document.getElementById('edit_name').value.trim(),
           lastname: document.getElementById('edit_lastname').value.trim(),
