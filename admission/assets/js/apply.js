@@ -588,7 +588,7 @@
       const level = r.value;
       const sel = document.getElementById('branch_select');
       sel.disabled = false;
-      sel.innerHTML = `<option value="">— เลือกสาขาวิชา —</option>` +
+      sel.innerHTML = `<option value="" disabled>— เลือกสาขาวิชา —</option>` +
         branchesByLevel[level].map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(branchDisplayName(b))}</option>`).join('');
       selectedBranch = null;
       document.getElementById('branch_price_box').innerHTML = '';
