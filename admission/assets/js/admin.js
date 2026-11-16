@@ -221,7 +221,7 @@
 
   function pdfStatusBadge(app) {
     if (app.pdf_url) {
-      return `<span class="badge text-bg-success">พร้อมแล้ว</span> <a href="${escapeHtml(toViewDriveUrl(app.pdf_url))}" target="_blank" rel="noopener" class="d-inline-flex align-items-center" title="เปิดไฟล์ PDF"><img src="https://lh3.googleusercontent.com/d/1qeLVRMgBUXEWn-1PIBRVk0Z9BS0DOSlW" alt="เปิดไฟล์ PDF" style="height: 32px; width: auto; vertical-align: middle;"></a>`;
+      return `<span class="badge text-bg-success">พร้อมแล้ว</span> <a href="${escapeHtml(toViewDriveUrl(app.pdf_url))}" target="_blank" rel="noopener" class="btn btn-outline-primary d-inline-flex align-items-center" title="เปิดไฟล์ PDF">เปิดไฟล์ PDF &nbsp;&nbsp; <i class="text-danger bi bi-file-earmark-pdf-fill"></i></a>`;
     }
     return `<span class="badge text-bg-secondary">ยังไม่มีไฟล์</span>`;
   }
@@ -558,7 +558,7 @@
     footer.innerHTML = `
       <div class="d-flex align-items-center gap-3 me-auto flex-wrap">
         <a href="../apply.html?${escapeHtml(detailQuery)}" target="_blank" rel="noopener" class="btn btn-outline-primary">
-           รายละเอียดผู้สมัคร  &nbsp;&nbsp;<i class="bi bi-box-arrow-up-right me-1"></i>
+           รายละเอียดผู้สมัคร  &nbsp;&nbsp;<i class="text-success bi bi-person-rolodex"></i>
         </a> ::: 
         <div class="d-flex align-items-center gap-2">
           <strong>ใบสมัคร PDF:</strong>
@@ -960,14 +960,14 @@
                 body { margin: 0; background: #525659; display: flex; flex-direction: column; align-items: center; padding: 20px; }
                 .page { margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); width: 794px; max-width: 100%; background: white; }
                 @media print {
-                  body { background: white; padding: 0; margin: 0; display: block; }
-                  .page { box-shadow: none; margin-bottom: 0; width: 100%; page-break-after: always; display: block; }
+                  @page { size: A4 portrait; margin: 0; }
+                  html, body { background: white; padding: 0; margin: 0; }
+                  .page { box-shadow: none; margin: 0 auto; width: 100%; max-height: 100vh; object-fit: contain; display: block; page-break-after: always; break-after: page; }
+                  .page:last-child { page-break-after: auto !important; break-after: auto !important; margin-bottom: 0 !important; }
                 }
               </style>
             </head>
-            <body>
-              ${canvases.map(src => `<img class="page" src="${src}" />`).join('')}
-            </body>
+            <body>${canvases.map(src => `<img class="page" src="${src}" alt="Slip" />`).join('')}</body>
           </html>
         `;
 
