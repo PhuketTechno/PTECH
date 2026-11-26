@@ -364,10 +364,26 @@
       }
     }
 
-    let branchStr = app.branch || '';
+    let branchStr = (app.branch || '').trim();
     const group = branchesByLevel[app.level] || [];
 
-    const branchInfo = group.find(b => branchStr.includes(b.name) || branchDisplayName(b) === branchStr);
+    let branchInfo = null;
+    if (app.branch_id) {
+      branchInfo = group.find(b => String(b.id) === String(app.branch_id));
+    }
+    if (!branchInfo && branchStr) {
+      branchInfo = group.find(b => branchDisplayName(b) === branchStr);
+    }
+    if (!branchInfo && branchStr) {
+      branchInfo = group.find(b => b.name === branchStr);
+    }
+    if (!branchInfo && branchStr) {
+      branchInfo = group.find(b => b.track && branchStr.includes(b.name) && branchStr.includes(b.track));
+    }
+    if (!branchInfo && branchStr) {
+      branchInfo = group.find(b => !b.track && (branchStr === b.name || branchStr.includes(b.name)))
+        || group.find(b => branchDisplayName(b).includes(branchStr) || branchStr.includes(b.name));
+    }
 
     const priceText = branchInfo && branchInfo.price ? formatBaht(branchInfo.price) : 'รอตรวจสอบอัตราค่าธรรมเนียม';
 
